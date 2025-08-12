@@ -1,0 +1,332 @@
+---
+description: Development workflow and process standards for Claude SDK Server
+globs: ["*.py", "**/*.py", "*.md"]
+alwaysApply: true
+---
+
+## Git Workflow
+
+### Branch Strategy
+- `main` - Production-ready code
+- `develop` - Integration branch
+- `feature/*` - New features
+- `fix/*` - Bug fixes
+- `release/*` - Release preparation
+- `hotfix/*` - Production fixes
+
+### Commit Messages
+```bash
+# Format: <type>(<scope>): <subject>
+feat(api): add streaming support for chat completions
+fix(auth): resolve JWT token expiration issue
+docs(readme): update installation instructions
+refactor(cache): optimize Redis connection pooling
+test(chat): add unit tests for message validation
+chore(deps): update anthropic SDK to v0.18.0
+```
+
+### Pull Request Template
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Checklist
+- [ ] Code follows style guidelines
+- [ ] Self-review completed
+- [ ] Documentation updated
+- [ ] No new warnings
+```
+
+## Development Setup
+
+```bash
+# Clone repository
+git clone https://github.com/org/claude-sdk-server.git
+cd claude-sdk-server
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -e ".[dev]"
+
+# Setup pre-commit hooks
+pre-commit install
+
+# Copy environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run development server
+uvicorn src.claude_sdk_server.main:app --reload
+```
+
+## Code Quality Tools
+
+### Linting & Formatting
+```toml
+# pyproject.toml
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+include = '\.pyi?$'
+
+[tool.ruff]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E203", "E501"]
+line-length = 88
+target-version = "py313"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+```
+
+### Pre-commit Configuration
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      
+  - repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+      
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.1.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+      
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-redis]
+```
+
+## Testing Strategy
+
+### Test Execution
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+
+# Run specific test types
+pytest tests/unit
+pytest tests/integration
+pytest tests/e2e
+
+# Run with markers
+pytest -m "not slow"
+pytest -m "asyncio"
+
+# Watch mode
+pytest-watch
+```
+
+### Test Configuration
+```ini
+# pytest.ini
+[tool:pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+asyncio_mode = auto
+markers =
+    slow: marks tests as slow
+    integration: integration tests
+    e2e: end-to-end tests
+addopts = 
+    -ra
+    --strict-markers
+    --strict-config
+    --cov=src
+    --cov-branch
+    --cov-report=term-missing:skip-covered
+```
+
+## API Development
+
+### Local Testing
+```bash
+# Start server
+uvicorn src.claude_sdk_server.main:app --reload --port 8000
+
+# Test with curl
+curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "Hello"}]}'
+
+# Test with httpie
+http POST localhost:8000/v1/chat/completions \
+  messages='[{"role": "user", "content": "Hello"}]'
+
+# Interactive API docs
+# Open: http://localhost:8000/docs
+```
+
+## Documentation
+
+### Code Documentation
+```python
+"""
+Module description.
+
+This module provides functionality for X.
+"""
+
+def function_name(param: str) -> str:
+    """
+    Brief description.
+    
+    Longer description if needed.
+    
+    Args:
+        param: Description of parameter
+        
+    Returns:
+        Description of return value
+        
+    Raises:
+        ValueError: When param is invalid
+        
+    Example:
+        >>> function_name("test")
+        "result"
+    """
+    pass
+```
+
+### API Documentation
+- Auto-generated from FastAPI
+- Available at `/docs` (Swagger)
+- Available at `/redoc` (ReDoc)
+- Keep descriptions updated
+- Include request/response examples
+
+## Debugging
+
+### Debug Configuration
+```json
+// .vscode/launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI Debug",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "src.claude_sdk_server.main:app",
+        "--reload",
+        "--port", "8000"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    }
+  ]
+}
+```
+
+### Logging for Development
+```python
+import structlog
+
+logger = structlog.get_logger()
+
+# Development logging
+logger.debug("Processing request", request_id=req_id)
+logger.info("Request completed", duration=time)
+logger.warning("Rate limit approaching", remaining=10)
+logger.error("API call failed", error=str(e))
+```
+
+## Performance Profiling
+
+```python
+# Profile async functions
+import cProfile
+import pstats
+from io import StringIO
+
+def profile_async(func):
+    async def wrapper(*args, **kwargs):
+        pr = cProfile.Profile()
+        pr.enable()
+        result = await func(*args, **kwargs)
+        pr.disable()
+        
+        s = StringIO()
+        ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+        ps.print_stats(10)
+        logger.debug(s.getvalue())
+        
+        return result
+    return wrapper
+```
+
+## Release Process
+
+```bash
+# 1. Create release branch
+git checkout -b release/v1.0.0
+
+# 2. Update version
+# Edit pyproject.toml version
+
+# 3. Update changelog
+# Edit CHANGELOG.md
+
+# 4. Run tests
+pytest
+mypy src
+ruff check src
+
+# 5. Build Docker image
+docker build -t claude-sdk-server:v1.0.0 .
+
+# 6. Tag release
+git tag -a v1.0.0 -m "Release version 1.0.0"
+
+# 7. Push to registry
+docker push registry/claude-sdk-server:v1.0.0
+```
+
+## Monitoring Development
+
+- Check logs regularly
+- Monitor error rates
+- Track response times
+- Review memory usage
+- Watch for deprecations
+- Update dependencies monthly

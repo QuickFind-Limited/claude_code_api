@@ -1,0 +1,237 @@
+---
+description: Comprehensive testing standards for Claude SDK Server
+globs: ["**/tests/**/*.py", "**/test_*.py", "**/*_test.py"]
+alwaysApply: true
+---
+
+## Test Structure
+
+- Arrange-Act-Assert pattern
+- One assertion per test ideal
+- Descriptive test names
+- Group related tests in classes
+- Separate unit/integration/e2e
+- Fixtures for common setup
+
+## Unit Testing
+
+```python
+# Test individual functions/methods
+import pytest
+from unittest.mock import Mock, AsyncMock
+
+class TestChatService:
+    @pytest.fixture
+    def service(self):
+        client = AsyncMock()
+        return ChatService(client)
+    
+    async def test_complete_success(self, service):
+        # Arrange
+        service.client.complete.return_value = "response"
+        
+        # Act
+        result = await service.complete("prompt")
+        
+        # Assert
+        assert result == "response"
+        service.client.complete.assert_called_once_with("prompt")
+```
+
+## Integration Testing
+
+```python
+# Test component interactions
+from fastapi.testclient import TestClient
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+def test_chat_endpoint_integration(client):
+    # Arrange
+    request_data = {
+        "messages": [{"role": "user", "content": "Hello"}]
+    }
+    
+    # Act
+    response = client.post("/v1/chat/completions", json=request_data)
+    
+    # Assert
+    assert response.status_code == 200
+    assert "choices" in response.json()
+```
+
+## Async Testing
+
+```python
+# Test async functions
+@pytest.mark.asyncio
+async def test_async_stream():
+    # Arrange
+    stream = create_stream()
+    
+    # Act
+    chunks = []
+    async for chunk in stream:
+        chunks.append(chunk)
+    
+    # Assert
+    assert len(chunks) > 0
+    assert all(isinstance(c, str) for c in chunks)
+```
+
+## Mock Strategies
+
+```python
+# Mock external dependencies
+@pytest.fixture
+def mock_claude_client():
+    with patch("claude_sdk.Client") as mock:
+        mock.return_value.complete = AsyncMock()
+        yield mock
+
+# Mock Redis
+@pytest.fixture
+async def mock_redis():
+    redis = fakeredis.aioredis.FakeRedis()
+    yield redis
+    await redis.close()
+```
+
+## Parametrized Tests
+
+```python
+@pytest.mark.parametrize("input,expected", [
+    ("", ValidationError),
+    ("a" * 10001, ValidationError),
+    ("valid input", None),
+    ("special chars !@#", None),
+])
+def test_input_validation(input, expected):
+    if expected:
+        with pytest.raises(expected):
+            validate_input(input)
+    else:
+        assert validate_input(input) is True
+```
+
+## Fixture Best Practices
+
+```python
+# Scoped fixtures
+@pytest.fixture(scope="session")
+async def db_connection():
+    conn = await create_connection()
+    yield conn
+    await conn.close()
+
+# Autouse fixtures
+@pytest.fixture(autouse=True)
+def reset_environment():
+    original = os.environ.copy()
+    yield
+    os.environ.clear()
+    os.environ.update(original)
+```
+
+## Error Testing
+
+```python
+def test_error_handling():
+    # Test specific exceptions
+    with pytest.raises(ValueError, match="Invalid input"):
+        process_invalid_data()
+    
+    # Test error messages
+    with pytest.raises(HTTPException) as exc_info:
+        validate_request({})
+    assert exc_info.value.status_code == 422
+    assert "required" in str(exc_info.value.detail)
+```
+
+## Performance Testing
+
+```python
+@pytest.mark.benchmark
+def test_performance_threshold(benchmark):
+    # Benchmark function performance
+    result = benchmark(expensive_operation)
+    assert benchmark.stats["mean"] < 0.1  # 100ms threshold
+
+# Load testing
+@pytest.mark.load
+async def test_concurrent_requests():
+    tasks = [make_request() for _ in range(100)]
+    results = await asyncio.gather(*tasks)
+    assert all(r.status_code == 200 for r in results)
+```
+
+## Test Data Management
+
+```python
+# Factory pattern for test data
+class MessageFactory:
+    @staticmethod
+    def create_message(**kwargs):
+        defaults = {
+            "role": "user",
+            "content": "Test message"
+        }
+        return Message(**{**defaults, **kwargs})
+
+# Fixtures for test data
+@pytest.fixture
+def sample_messages():
+    return [
+        MessageFactory.create_message(),
+        MessageFactory.create_message(role="assistant")
+    ]
+```
+
+## Coverage Requirements
+
+- Minimum 80% code coverage
+- 100% coverage for critical paths
+- Branch coverage tracking
+- Exclude generated code
+- Coverage reports in CI
+- Fail builds under threshold
+
+## Test Organization
+
+```
+tests/
+├── unit/
+│   ├── domain/
+│   ├── application/
+│   └── infrastructure/
+├── integration/
+│   ├── api/
+│   └── external/
+├── e2e/
+│   └── scenarios/
+├── fixtures/
+├── factories/
+└── conftest.py
+```
+
+## CI/CD Integration
+
+```yaml
+# GitHub Actions example
+- name: Run tests
+  run: |
+    pytest tests/unit --cov=src --cov-report=xml
+    pytest tests/integration
+    pytest tests/e2e --markers=e2e
+```
+
+## Test Documentation
+
+- Docstrings for complex tests
+- Comments for non-obvious assertions
+- README with test running instructions
+- Test plan documentation
+- Coverage reports accessible
+- Performance baselines documented

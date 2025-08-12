@@ -1,0 +1,365 @@
+---
+description: Docker containerization and deployment patterns
+globs: ["Dockerfile", "docker-compose*.yml", ".dockerignore"]
+alwaysApply: true
+---
+
+## Dockerfile Best Practices
+
+```dockerfile
+# Multi-stage build for smaller images
+FROM python:3.13-slim as builder
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir uv && \
+    uv pip install --system --no-cache
+
+# Production stage
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+# Copy dependencies from builder
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY --chown=appuser:appuser ./src ./src
+COPY --chown=appuser:appuser ./config ./config
+
+# Switch to non-root user
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD python -c "import httpx; httpx.get('http://localhost:8000/health')"
+
+# Expose port
+EXPOSE 8000
+
+# Run application
+CMD ["uvicorn", "src.claude_sdk_server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+## Docker Compose Configuration
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_ENV: ${BUILD_ENV:-production}
+    image: claude-sdk-server:latest
+    container_name: claude-sdk-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - claude-network
+    volumes:
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  redis:
+    image: redis:7-alpine
+    container_name: claude-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - claude-network
+
+networks:
+  claude-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+```
+
+## Docker Ignore
+
+```gitignore
+# .dockerignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Development
+.git/
+.github/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+tests/
+test-reports/
+coverage.xml
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+```
+
+## Environment Configuration
+
+```bash
+# .env.docker
+# API Configuration
+API_TITLE=Claude SDK Server
+API_VERSION=1.0.0
+API_PREFIX=/v1
+
+# Server Settings
+HOST=0.0.0.0
+PORT=8000
+WORKERS=4
+RELOAD=false
+
+# External Services
+ANTHROPIC_API_KEY=sk-ant-xxx
+REDIS_URL=redis://redis:6379/0
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FORMAT=json
+
+# Performance
+MAX_CONNECTIONS=100
+CONNECTION_TIMEOUT=60
+REQUEST_TIMEOUT=30
+
+# Security
+CORS_ORIGINS=["http://localhost:3000"]
+TRUSTED_HOSTS=["localhost", "127.0.0.1"]
+```
+
+## Build Optimization
+
+```dockerfile
+# Use build cache efficiently
+# Copy files that change less frequently first
+COPY pyproject.toml uv.lock ./
+RUN uv pip install --system
+
+# Copy source code last
+COPY ./src ./src
+
+# Use .dockerignore to exclude unnecessary files
+# Use multi-stage builds to reduce image size
+# Combine RUN commands to reduce layers
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+```
+
+## Security Hardening
+
+```dockerfile
+# Run as non-root user
+RUN useradd -m -u 1000 -s /bin/bash appuser
+USER appuser
+
+# Use specific versions
+FROM python:3.13.0-slim
+
+# Don't install unnecessary packages
+RUN apt-get install -y --no-install-recommends
+
+# Remove package managers in production
+RUN pip install --no-cache-dir && \
+    rm -rf /root/.cache/pip
+
+# Scan for vulnerabilities
+# Run: docker scan claude-sdk-server:latest
+```
+
+## Health Checks
+
+```python
+# src/claude_sdk_server/infrastructure/api/health.py
+from fastapi import APIRouter, status
+from datetime import datetime
+import httpx
+
+router = APIRouter(tags=["health"])
+
+@router.get("/health", status_code=status.HTTP_200_OK)
+async def health_check():
+    """Basic health check."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "1.0.0"
+    }
+
+@router.get("/health/ready", status_code=status.HTTP_200_OK)
+async def readiness_check(redis: Redis = Depends(get_redis)):
+    """Check if service is ready to handle requests."""
+    checks = {
+        "redis": await check_redis(redis),
+        "claude_api": await check_claude_api()
+    }
+    
+    if all(checks.values()):
+        return {"status": "ready", "checks": checks}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "not ready", "checks": checks}
+        )
+```
+
+## Container Orchestration
+
+```yaml
+# docker-compose.production.yml
+version: '3.8'
+
+services:
+  api:
+    image: ${DOCKER_REGISTRY}/claude-sdk-server:${VERSION:-latest}
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+```
+
+## CI/CD Integration
+
+```yaml
+# .github/workflows/docker.yml
+name: Docker Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+      
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.REGISTRY }}/claude-sdk-server:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+```
+
+## Monitoring & Logging
+
+```yaml
+# docker-compose.monitoring.yml
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+      
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+```

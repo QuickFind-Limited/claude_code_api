@@ -1,0 +1,16 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# AIDD - AI-Driven Dev
+#
+# You might want to ignore the following files and directories:
+#
+aidd* # AIDD installation folder

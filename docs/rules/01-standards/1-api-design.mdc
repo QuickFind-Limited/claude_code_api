@@ -1,0 +1,203 @@
+---
+description: RESTful API design standards and conventions for Claude SDK Server
+globs: ["**/api/**/*.py", "**/routers/**/*.py"]
+alwaysApply: true
+---
+
+## URL Structure
+
+- Use nouns, not verbs
+- Plural for collections (/users)
+- Singular for resources (/user/123)
+- Hyphenate multi-word paths
+- Version in URL (/v1, /v2)
+- Consistent hierarchy
+
+## HTTP Methods
+
+- GET for retrieval only
+- POST for creation
+- PUT for full updates
+- PATCH for partial updates
+- DELETE for removal
+- HEAD for metadata
+- OPTIONS for capabilities
+
+## Status Codes
+
+### Success Codes
+- 200 OK - Successful GET/PUT
+- 201 Created - Successful POST
+- 202 Accepted - Async processing
+- 204 No Content - Successful DELETE
+- 206 Partial Content - Pagination
+
+### Client Error Codes
+- 400 Bad Request - Invalid syntax
+- 401 Unauthorized - Missing auth
+- 403 Forbidden - No permission
+- 404 Not Found - Resource missing
+- 409 Conflict - State conflict
+- 422 Unprocessable - Validation error
+- 429 Too Many Requests - Rate limit
+
+### Server Error Codes
+- 500 Internal Error - Server fault
+- 502 Bad Gateway - Upstream error
+- 503 Unavailable - Maintenance
+- 504 Gateway Timeout - Upstream timeout
+
+## Request Format
+
+```json
+{
+  "data": {
+    "type": "chat-completion",
+    "attributes": {
+      "messages": [],
+      "model": "claude-3"
+    }
+  },
+  "meta": {
+    "session_id": "abc123"
+  }
+}
+```
+
+## Response Format
+
+```json
+{
+  "data": {
+    "id": "msg-123",
+    "type": "chat-completion",
+    "attributes": {
+      "content": "Response text",
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  "meta": {
+    "usage": {
+      "tokens": 100
+    }
+  },
+  "links": {
+    "self": "/v1/completions/msg-123"
+  }
+}
+```
+
+## Error Format
+
+```json
+{
+  "errors": [{
+    "id": "err-123",
+    "status": "422",
+    "code": "validation_error",
+    "title": "Validation Failed",
+    "detail": "The 'messages' field is required",
+    "source": {
+      "pointer": "/data/attributes/messages"
+    },
+    "meta": {
+      "timestamp": "2024-01-01T00:00:00Z"
+    }
+  }]
+}
+```
+
+## Pagination
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "page": {
+      "size": 20,
+      "number": 1,
+      "total": 100
+    }
+  },
+  "links": {
+    "first": "/v1/items?page=1&size=20",
+    "last": "/v1/items?page=5&size=20",
+    "next": "/v1/items?page=2&size=20",
+    "prev": null
+  }
+}
+```
+
+## Filtering & Sorting
+
+- Query params for filters
+- Consistent parameter names
+- Multiple values with comma
+- Range with brackets [min,max]
+- Sort with +/- prefix
+- Default sort order documented
+
+```
+GET /v1/sessions?status=active&created_at[gte]=2024-01-01&sort=-created_at
+```
+
+## Headers
+
+### Request Headers
+- Content-Type: application/json
+- Accept: application/json
+- Authorization: Bearer {token}
+- X-Request-ID: {uuid}
+- X-API-Version: 1.0
+
+### Response Headers
+- Content-Type: application/json
+- X-Request-ID: {uuid}
+- X-Rate-Limit-Remaining: 100
+- X-Rate-Limit-Reset: 1234567890
+- Cache-Control: no-cache
+
+## Versioning
+
+- Major version in URL
+- Minor version in header
+- Deprecation warnings
+- Sunset headers for EOL
+- Migration guides
+- Backward compatibility
+
+## Rate Limiting
+
+- Return limit in headers
+- 429 when exceeded
+- Retry-After header
+- Per-user limits
+- Endpoint-specific limits
+- Grace period handling
+
+## Caching
+
+- ETag for resources
+- If-None-Match support
+- 304 Not Modified
+- Cache-Control headers
+- Vary header for variants
+- Max-age directives
+
+## Security
+
+- HTTPS only
+- Authentication required
+- API key rotation
+- Rate limiting
+- Input validation
+- Output sanitization
+
+## Documentation
+
+- OpenAPI 3.0 spec
+- Interactive documentation
+- Request/response examples
+- Error code reference
+- Authentication guide
+- Rate limit documentation

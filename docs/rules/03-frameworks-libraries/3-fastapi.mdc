@@ -1,0 +1,146 @@
+---
+description: FastAPI framework patterns and best practices for REST API development
+globs: ["**/api/**/*.py", "**/routers/**/*.py", "**/endpoints/**/*.py"]
+alwaysApply: true
+---
+
+## API Structure
+
+- Version APIs (/v1, /v2)
+- RESTful resource naming
+- Plural nouns for collections
+- HTTP verbs correctly used
+- Consistent URL patterns
+- Nested resources when logical
+
+## Router Organization
+
+- One router per resource
+- Group related endpoints
+- Use tags for documentation
+- Prefix for route groups
+- Dependency injection in routers
+- Include routers in main app
+
+## Request/Response Models
+
+- Pydantic models for validation
+- Separate request/response schemas
+- Field validators for constraints
+- Optional fields with defaults
+- Example values in schema
+- Response model inheritance
+
+## Dependency Injection
+
+- Use Depends for dependencies
+- Async dependencies preferred
+- Yield for cleanup logic
+- Scoped dependencies per request
+- Override for testing
+- Cache dependencies when safe
+
+## Error Handling
+
+- HTTPException for API errors
+- Custom exception handlers
+- Consistent error format
+- Appropriate status codes
+- Detail messages for debugging
+- Problem Details RFC compliance
+
+## Async Handlers
+
+- Async def for all endpoints
+- Await all async operations
+- Background tasks for long ops
+- Streaming responses when needed
+- WebSocket support patterns
+- Server-sent events for push
+
+## Validation
+
+- Pydantic for request validation
+- Path parameters validation
+- Query parameters with defaults
+- Body validation with models
+- Custom validators for business rules
+- Field constraints and regex
+
+## Response Patterns
+
+- Status codes follow standards
+- 201 Created with Location header
+- 204 No Content for deletes
+- 422 for validation errors
+- JSONResponse for custom headers
+- Response models for type safety
+
+## Middleware
+
+- CORS middleware configuration
+- Request ID middleware
+- Timing middleware for metrics
+- Exception handling middleware
+- Authentication middleware
+- Rate limiting middleware
+
+## Documentation
+
+- OpenAPI schema customization
+- Endpoint descriptions
+- Request/response examples
+- Tag descriptions
+- External docs links
+- Deprecation notices
+
+## Security
+
+- OAuth2 with JWT tokens
+- API key authentication
+- Rate limiting per user
+- Input sanitization
+- CORS configuration
+- Security headers
+
+## Performance
+
+- Connection pooling
+- Response caching strategies
+- Pagination for lists
+- Partial responses
+- Compression middleware
+- Database query optimization
+
+## Testing
+
+- TestClient for integration tests
+- Mock dependencies
+- Parametrized test cases
+- Status code assertions
+- Response schema validation
+- Performance benchmarks
+
+## File Structure Example
+
+```python
+# src/infrastructure/api/v1/chat.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
+
+router = APIRouter(prefix="/v1/chat", tags=["chat"])
+
+@router.post("/completions", response_model=ChatResponse)
+async def create_completion(
+    request: ChatRequest,
+    service: ChatService = Depends(get_chat_service),
+) -> ChatResponse:
+    """Create a chat completion."""
+    try:
+        return await service.complete(request)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e)
+        )
+```

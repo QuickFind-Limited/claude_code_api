@@ -1,0 +1,279 @@
+---
+description: Code organization and project structure standards
+globs: ["*.py", "**/*.py"]
+alwaysApply: true
+---
+
+## Project Structure
+
+```
+claude-sdk-server/
+├── src/
+│   └── claude_sdk_server/
+│       ├── __init__.py
+│       ├── domain/           # Business logic
+│       │   ├── entities/
+│       │   ├── services/
+│       │   └── exceptions/
+│       ├── application/      # Use cases
+│       │   ├── ports/
+│       │   ├── services/
+│       │   └── use_cases/
+│       ├── infrastructure/   # External interfaces
+│       │   ├── api/
+│       │   │   ├── v1/
+│       │   │   └── middleware/
+│       │   ├── adapters/
+│       │   │   ├── claude/
+│       │   │   └── redis/
+│       │   └── config/
+│       └── main.py          # Application entry
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── docs/
+│   ├── memory-bank/
+│   ├── rules/
+│   └── tasks/
+└── config/
+    ├── .env.example
+    └── settings.yaml
+```
+
+## Module Organization
+
+- One class per file preferred
+- Related functions in single module
+- Clear module boundaries
+- Explicit exports in __init__
+- No circular dependencies
+- Maximum file size 500 lines
+
+## Import Rules
+
+```python
+# Standard library first
+import os
+import sys
+from typing import Optional, List
+
+# Third-party libraries
+import fastapi
+from pydantic import BaseModel
+
+# Local application imports
+from claude_sdk_server.domain import entities
+from claude_sdk_server.application import services
+```
+
+## Naming Conventions
+
+### Files and Directories
+- Lowercase with underscores
+- Descriptive names
+- Singular for modules
+- Plural for collections
+- No abbreviations
+
+### Classes and Functions
+```python
+# Classes - PascalCase
+class ChatCompletionService:
+    pass
+
+# Functions - snake_case
+def process_chat_request():
+    pass
+
+# Constants - UPPER_CASE
+MAX_TOKEN_LIMIT = 4096
+
+# Private - leading underscore
+def _internal_helper():
+    pass
+```
+
+## Dependency Management
+
+```toml
+# pyproject.toml
+[project]
+dependencies = [
+    "fastapi>=0.104.0",
+    "pydantic>=2.0.0",
+    "anthropic>=0.18.0",
+    "redis>=5.0.0",
+    "httpx>=0.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+```
+
+## Configuration Management
+
+```python
+# config/settings.py
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+
+class Settings(BaseSettings):
+    # API Configuration
+    api_title: str = "Claude SDK Server"
+    api_version: str = "1.0.0"
+    api_prefix: str = "/v1"
+    
+    # External Services
+    anthropic_api_key: str
+    redis_url: str = "redis://localhost:6379"
+    
+    # Server Settings
+    host: str = "0.0.0.0"
+    port: int = 8000
+    workers: int = 4
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()
+```
+
+## Service Layer Pattern
+
+```python
+# application/services/chat_service.py
+from typing import Protocol
+
+class ChatServiceProtocol(Protocol):
+    """Port definition for chat service."""
+    async def complete(self, request: ChatRequest) -> ChatResponse:
+        ...
+
+class ChatService:
+    """Concrete implementation."""
+    def __init__(self, client: ClaudeClient, cache: CacheService):
+        self.client = client
+        self.cache = cache
+    
+    async def complete(self, request: ChatRequest) -> ChatResponse:
+        # Implementation
+        pass
+```
+
+## API Endpoint Structure
+
+```python
+# infrastructure/api/v1/routers/chat.py
+from fastapi import APIRouter, Depends
+from typing import Annotated
+
+router = APIRouter(
+    prefix="/chat",
+    tags=["chat"],
+    responses={404: {"description": "Not found"}}
+)
+
+@router.post(
+    "/completions",
+    response_model=ChatResponse,
+    summary="Create chat completion",
+    description="Send a message to Claude and receive a response"
+)
+async def create_completion(
+    request: ChatRequest,
+    service: Annotated[ChatService, Depends(get_chat_service)]
+) -> ChatResponse:
+    return await service.complete(request)
+```
+
+## Error Handling Structure
+
+```python
+# domain/exceptions.py
+class DomainError(Exception):
+    """Base domain exception."""
+    pass
+
+class ValidationError(DomainError):
+    """Validation failed."""
+    pass
+
+class RateLimitError(DomainError):
+    """Rate limit exceeded."""
+    pass
+
+# infrastructure/api/exception_handlers.py
+from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
+
+async def domain_exception_handler(
+    request: Request,
+    exc: DomainError
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content={"error": str(exc)}
+    )
+```
+
+## Logging Structure
+
+```python
+# infrastructure/logging.py
+import logging
+import structlog
+
+def setup_logging(level: str = "INFO") -> None:
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.processors.JSONRenderer()
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
+```
+
+## Documentation Standards
+
+```python
+def process_message(
+    content: str,
+    max_length: int = 1000
+) -> str:
+    """
+    Process and validate message content.
+    
+    Args:
+        content: The message content to process
+        max_length: Maximum allowed length
+        
+    Returns:
+        Processed message content
+        
+    Raises:
+        ValidationError: If content is invalid
+        
+    Example:
+        >>> process_message("Hello world")
+        "Hello world"
+    """
+    pass
+```

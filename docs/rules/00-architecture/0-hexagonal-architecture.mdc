@@ -1,0 +1,92 @@
+---
+description: Hexagonal Architecture (Ports & Adapters) patterns for Claude SDK Server
+globs: ["*.py", "src/**/*.py"]
+alwaysApply: true
+---
+
+## Core Principles
+
+- Separate domain from infrastructure
+- Define ports as interfaces
+- Implement adapters for external systems
+- Dependency injection over direct imports
+- Inside-out dependency flow
+
+## Layer Organization
+
+### Domain Layer
+- Pure business logic only
+- No framework dependencies
+- No external library imports
+- Domain models and entities
+- Business rules and validation
+
+### Application Layer
+- Use cases and orchestration
+- Service interfaces definition
+- Transaction boundaries
+- No direct infrastructure calls
+- Coordinate domain operations
+
+### Infrastructure Layer
+- Framework implementations (FastAPI)
+- External API clients (Claude)
+- Database/cache adapters (Redis)
+- Configuration and environment
+- HTTP/WebSocket handlers
+
+## Port Definitions
+
+### Primary Ports (Driving)
+- HTTP API endpoints
+- WebSocket connections
+- CLI interfaces
+- Event consumers
+
+### Secondary Ports (Driven)
+- Claude API integration
+- Redis cache interface
+- File storage interface
+- Monitoring interface
+
+## Adapter Implementation
+
+- One adapter per external system
+- Implement port interfaces strictly
+- Handle all external errors
+- Convert external data formats
+- Isolate third-party dependencies
+
+## Dependency Rules
+
+- Domain imports nothing external
+- Application imports domain only
+- Infrastructure imports application/domain
+- Adapters implement port interfaces
+- Use dependency injection container
+
+## File Structure
+
+```
+src/claude_sdk_server/
+├── domain/
+│   ├── entities/
+│   ├── value_objects/
+│   └── services/
+├── application/
+│   ├── ports/
+│   ├── services/
+│   └── use_cases/
+└── infrastructure/
+    ├── adapters/
+    ├── api/
+    └── config/
+```
+
+## Testing Strategy
+
+- Test domain without mocks
+- Mock ports for application tests
+- Integration tests for adapters
+- Contract tests for ports
+- E2E tests through primary ports

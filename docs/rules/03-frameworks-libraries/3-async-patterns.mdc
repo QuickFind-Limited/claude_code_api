@@ -1,0 +1,182 @@
+---
+description: Asynchronous programming patterns for high-performance I/O operations
+globs: ["*.py", "**/*.py"]
+alwaysApply: true
+---
+
+## Async Function Design
+
+- Mark I/O operations as async
+- Await all async calls
+- No blocking operations in async
+- Use async context managers
+- Async generators for streams
+- Return awaitables when appropriate
+
+## Concurrency Patterns
+
+```python
+# Use TaskGroup for concurrent operations
+async def process_multiple(items: list[str]) -> list[Result]:
+    async with asyncio.TaskGroup() as tg:
+        tasks = [tg.create_task(process_item(item)) for item in items]
+    return [task.result() for task in tasks]
+
+# Gather with error handling
+results = await asyncio.gather(
+    *tasks,
+    return_exceptions=True
+)
+```
+
+## Stream Processing
+
+```python
+# Async generator for streaming
+async def stream_response(prompt: str) -> AsyncGenerator[str, None]:
+    async for chunk in client.stream(prompt):
+        yield chunk.content
+        
+# Consume streams efficiently
+async for data in stream_response(prompt):
+    await process_chunk(data)
+```
+
+## Connection Management
+
+- Use connection pools
+- Async context managers for cleanup
+- Graceful shutdown handling
+- Reconnection with backoff
+- Circuit breaker pattern
+- Connection health checks
+
+## Error Handling
+
+```python
+# Timeout handling
+try:
+    async with asyncio.timeout(30):
+        result = await long_operation()
+except asyncio.TimeoutError:
+    logger.error("Operation timed out")
+    raise
+
+# Retry with exponential backoff
+async def retry_with_backoff(
+    func: Callable,
+    max_retries: int = 3,
+    base_delay: float = 1.0
+):
+    for attempt in range(max_retries):
+        try:
+            return await func()
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise
+            delay = base_delay * (2 ** attempt)
+            await asyncio.sleep(delay)
+```
+
+## Background Tasks
+
+```python
+# FastAPI background tasks
+from fastapi import BackgroundTasks
+
+@router.post("/process")
+async def process(
+    data: ProcessRequest,
+    background_tasks: BackgroundTasks
+):
+    background_tasks.add_task(process_async, data)
+    return {"status": "processing"}
+
+# Long-running tasks
+async def process_async(data: ProcessRequest):
+    async with get_session() as session:
+        await long_computation(session, data)
+```
+
+## Synchronization
+
+- Use asyncio.Lock for mutual exclusion
+- Semaphore for rate limiting
+- Event for signaling
+- Condition for complex coordination
+- Queue for producer-consumer
+- Barrier for phase synchronization
+
+## Resource Management
+
+```python
+# Async context manager
+class AsyncResource:
+    async def __aenter__(self):
+        await self.connect()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.disconnect()
+
+# Resource pooling
+class ConnectionPool:
+    def __init__(self, max_size: int = 10):
+        self._semaphore = asyncio.Semaphore(max_size)
+        self._connections: list[Connection] = []
+    
+    async def acquire(self) -> Connection:
+        async with self._semaphore:
+            return await self._get_connection()
+```
+
+## Testing Async Code
+
+```python
+# Pytest async fixtures
+@pytest.fixture
+async def client():
+    async with AsyncClient() as client:
+        yield client
+
+# Test async functions
+@pytest.mark.asyncio
+async def test_async_operation():
+    result = await async_function()
+    assert result is not None
+```
+
+## Performance Tips
+
+- Batch operations when possible
+- Use connection pooling
+- Avoid creating too many tasks
+- Profile async bottlenecks
+- Use uvloop for better performance
+- Consider sync alternatives for CPU-bound
+
+## Common Pitfalls
+
+- Don't mix sync and async carelessly
+- Avoid blocking the event loop
+- Don't forget to await
+- Handle cancellation properly
+- Close resources properly
+- Avoid shared mutable state
+
+## Streaming Responses
+
+```python
+# Server-sent events
+async def event_stream():
+    while True:
+        data = await get_next_event()
+        yield f"data: {json.dumps(data)}\n\n"
+        
+@router.get("/stream")
+async def stream_events():
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream"
+    )
+```

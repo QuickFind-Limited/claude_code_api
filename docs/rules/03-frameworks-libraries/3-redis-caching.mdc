@@ -1,0 +1,282 @@
+---
+description: Redis caching patterns and best practices for Claude SDK Server
+globs: ["**/cache/**/*.py", "**/redis/**/*.py"]
+alwaysApply: true
+---
+
+## Connection Management
+
+```python
+import redis.asyncio as redis
+from contextlib import asynccontextmanager
+
+class RedisManager:
+    def __init__(self, url: str):
+        self.pool = redis.ConnectionPool.from_url(
+            url,
+            max_connections=10,
+            decode_responses=True
+        )
+    
+    @asynccontextmanager
+    async def get_client(self):
+        client = redis.Redis(connection_pool=self.pool)
+        try:
+            yield client
+        finally:
+            await client.close()
+```
+
+## Caching Patterns
+
+### Cache-Aside Pattern
+```python
+async def get_with_cache(key: str) -> Any:
+    # Try cache first
+    cached = await redis.get(key)
+    if cached:
+        return json.loads(cached)
+    
+    # Fetch from source
+    data = await fetch_from_source(key)
+    
+    # Store in cache
+    await redis.setex(
+        key,
+        ttl=3600,  # 1 hour TTL
+        value=json.dumps(data)
+    )
+    return data
+```
+
+### Write-Through Pattern
+```python
+async def save_with_cache(key: str, data: dict) -> None:
+    # Save to primary storage
+    await save_to_database(key, data)
+    
+    # Update cache
+    await redis.setex(
+        key,
+        ttl=3600,
+        value=json.dumps(data)
+    )
+```
+
+## Key Naming
+
+- Use colons for namespacing
+- Include version in keys
+- Add user/tenant prefix
+- Use consistent patterns
+- Avoid spaces in keys
+- Document key schemas
+
+```python
+# Key naming convention
+def build_cache_key(*parts: str) -> str:
+    """Build cache key: service:version:resource:id"""
+    return ":".join(parts)
+
+# Examples
+session_key = build_cache_key("chat", "v1", "session", session_id)
+user_key = build_cache_key("user", user_id, "profile")
+rate_limit_key = build_cache_key("ratelimit", endpoint, user_id)
+```
+
+## TTL Strategies
+
+```python
+class CacheTTL:
+    """TTL values in seconds."""
+    SHORT = 300      # 5 minutes - hot data
+    MEDIUM = 3600    # 1 hour - frequent access
+    LONG = 86400     # 1 day - stable data
+    SESSION = 7200   # 2 hours - user sessions
+    
+    @staticmethod
+    def calculate_ttl(size: int) -> int:
+        """Dynamic TTL based on data size."""
+        if size < 1024:  # < 1KB
+            return CacheTTL.MEDIUM
+        elif size < 10240:  # < 10KB
+            return CacheTTL.SHORT
+        else:
+            return 60  # 1 minute for large data
+```
+
+## Session Management
+
+```python
+class SessionStore:
+    def __init__(self, redis_client: redis.Redis):
+        self.redis = redis_client
+        self.ttl = 7200  # 2 hours
+    
+    async def create(self, session_id: str, data: dict) -> None:
+        key = f"session:{session_id}"
+        await self.redis.hset(key, mapping=data)
+        await self.redis.expire(key, self.ttl)
+    
+    async def get(self, session_id: str) -> dict | None:
+        key = f"session:{session_id}"
+        data = await self.redis.hgetall(key)
+        if data:
+            # Refresh TTL on access
+            await self.redis.expire(key, self.ttl)
+        return data
+    
+    async def update(self, session_id: str, updates: dict) -> None:
+        key = f"session:{session_id}"
+        if await self.redis.exists(key):
+            await self.redis.hset(key, mapping=updates)
+            await self.redis.expire(key, self.ttl)
+```
+
+## Rate Limiting
+
+```python
+async def check_rate_limit(
+    user_id: str,
+    limit: int = 100,
+    window: int = 60
+) -> bool:
+    """Sliding window rate limiter."""
+    key = f"ratelimit:{user_id}"
+    now = time.time()
+    
+    # Remove old entries
+    await redis.zremrangebyscore(key, 0, now - window)
+    
+    # Count recent requests
+    count = await redis.zcard(key)
+    
+    if count < limit:
+        # Add current request
+        await redis.zadd(key, {str(uuid.uuid4()): now})
+        await redis.expire(key, window)
+        return True
+    
+    return False
+```
+
+## Cache Invalidation
+
+```python
+class CacheInvalidator:
+    async def invalidate_pattern(self, pattern: str) -> int:
+        """Invalidate keys matching pattern."""
+        cursor = 0
+        deleted = 0
+        
+        while True:
+            cursor, keys = await redis.scan(
+                cursor,
+                match=pattern,
+                count=100
+            )
+            
+            if keys:
+                deleted += await redis.delete(*keys)
+            
+            if cursor == 0:
+                break
+        
+        return deleted
+    
+    async def invalidate_tags(self, tags: list[str]) -> None:
+        """Invalidate cache entries by tags."""
+        for tag in tags:
+            members = await redis.smembers(f"tag:{tag}")
+            if members:
+                await redis.delete(*members)
+                await redis.delete(f"tag:{tag}")
+```
+
+## Distributed Locking
+
+```python
+from redis.asyncio.lock import Lock
+
+async def with_lock(key: str, timeout: int = 10):
+    """Distributed lock for critical sections."""
+    lock = Lock(
+        redis,
+        f"lock:{key}",
+        timeout=timeout,
+        blocking_timeout=5
+    )
+    
+    async with lock:
+        # Critical section
+        await perform_exclusive_operation()
+```
+
+## Performance Optimization
+
+- Use pipelining for bulk operations
+- Batch similar operations
+- Use Lua scripts for atomicity
+- Monitor memory usage
+- Set appropriate max memory
+- Use compression for large values
+
+```python
+# Pipeline example
+async def bulk_get(keys: list[str]) -> list[Any]:
+    async with redis.pipeline() as pipe:
+        for key in keys:
+            pipe.get(key)
+        results = await pipe.execute()
+    return [json.loads(r) if r else None for r in results]
+```
+
+## Monitoring
+
+```python
+async def get_cache_stats() -> dict:
+    """Get cache performance metrics."""
+    info = await redis.info("stats")
+    memory = await redis.info("memory")
+    
+    return {
+        "hits": info.get("keyspace_hits", 0),
+        "misses": info.get("keyspace_misses", 0),
+        "hit_rate": calculate_hit_rate(info),
+        "memory_used": memory.get("used_memory_human"),
+        "evicted_keys": info.get("evicted_keys", 0),
+        "connected_clients": info.get("connected_clients", 0)
+    }
+```
+
+## Error Handling
+
+```python
+from redis.exceptions import RedisError, ConnectionError
+
+async def safe_cache_get(key: str, default: Any = None) -> Any:
+    """Get from cache with fallback."""
+    try:
+        value = await redis.get(key)
+        return json.loads(value) if value else default
+    except ConnectionError:
+        logger.warning(f"Redis connection failed for key: {key}")
+        return default
+    except RedisError as e:
+        logger.error(f"Redis error: {e}")
+        return default
+```
+
+## Testing
+
+```python
+import fakeredis.aioredis
+
+@pytest.fixture
+async def redis_client():
+    """Test fixture with fake Redis."""
+    client = fakeredis.aioredis.FakeRedis()
+    yield client
+    await client.flushall()
+    await client.close()
+```

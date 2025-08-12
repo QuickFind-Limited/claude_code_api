@@ -1,0 +1,113 @@
+---
+description: Python 3.13 coding standards and best practices for Claude SDK Server
+globs: ["*.py", "**/*.py"]
+alwaysApply: true
+---
+
+## Type Hints
+
+- Use type hints everywhere
+- Return types for all functions
+- Generic types for collections
+- Optional for nullable values
+- Union types when needed
+- TypeAlias for complex types
+
+## Python 3.13 Features
+
+- Use match-case for pattern matching
+- Leverage structural pattern matching
+- Exception groups for multiple errors
+- TaskGroup for concurrent tasks
+- Type parameter syntax
+- Override decorator usage
+
+## Async/Await Patterns
+
+- Async functions for I/O operations
+- Use asyncio.TaskGroup for concurrency
+- Async context managers (async with)
+- Async iterators (async for)
+- Avoid blocking in async functions
+- ConfigureAwait(False) when appropriate
+
+## Code Organization
+
+- One class per file preferred
+- Group related functions in modules
+- Use __init__.py for exports
+- Private functions with underscore
+- Constants in UPPER_CASE
+- Module-level docstrings
+
+## Error Handling
+
+- Specific exception types
+- Exception chaining with from
+- Use ExceptionGroup for multiple
+- Finally blocks for cleanup
+- Log exceptions with context
+- Never catch bare Exception
+
+## String Handling
+
+- F-strings for formatting
+- Raw strings for regex
+- Triple quotes for multiline
+- String methods over regex
+- UTF-8 encoding default
+- Path objects for file paths
+
+## Collections
+
+- List comprehensions for transforms
+- Generator expressions for memory
+- Dict comprehensions for mappings
+- Set operations for uniqueness
+- Dataclasses for structures
+- NamedTuple for immutable data
+
+## Function Design
+
+- Single responsibility principle
+- Max 20 lines per function
+- Max 5 parameters preferred
+- Keyword-only arguments
+- Default values for optional
+- Docstrings with examples
+
+## Class Design
+
+- Prefer composition over inheritance
+- Abstract base classes for interfaces
+- Properties for computed attributes
+- Class methods for factories
+- Static methods for utilities
+- Slots for memory optimization
+
+## Testing Conventions
+
+- Test_ prefix for test classes
+- test_ prefix for test methods
+- Arrange-Act-Assert pattern
+- One assertion per test preferred
+- Fixtures for setup/teardown
+- Parametrize for multiple cases
+
+## Performance
+
+- Profile before optimizing
+- Use generators for large data
+- Cache expensive computations
+- Lazy evaluation where possible
+- Avoid premature optimization
+- Memory-efficient data structures
+
+## Security
+
+- Validate all inputs
+- Sanitize user data
+- Use secrets module
+- No hardcoded credentials
+- Parameterized queries
+- Secure random generation

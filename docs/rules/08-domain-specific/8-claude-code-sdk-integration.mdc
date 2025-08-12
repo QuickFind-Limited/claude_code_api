@@ -1,0 +1,405 @@
+---
+description: Claude Code SDK Python integration patterns for Claude SDK Server
+globs: ["**/claude/**/*.py", "**/sdk/**/*.py", "**/client/**/*.py"]
+alwaysApply: true
+---
+
+## Claude Code SDK Setup
+
+### Installation Requirements
+```bash
+# Install Claude Code CLI first
+npm install -g @anthropic-ai/claude-code
+
+# Install Python SDK
+pip install claude-code-sdk
+
+# Verify installation
+claude --version
+python -c "import claude_code_sdk; print('SDK installed')"
+```
+
+### SDK Client Pattern
+```python
+import anyio
+from claude_code_sdk import ClaudeSDKClient, ClaudeCodeOptions
+
+class ClaudeCodeService:
+    """Service wrapper for Claude Code SDK."""
+    
+    def __init__(self, system_prompt: str = None):
+        self.default_options = ClaudeCodeOptions(
+            system_prompt=system_prompt or "You are a helpful AI assistant",
+            allowed_tools=["Read", "Write", "Bash", "WebSearch"],
+            max_turns=5,
+            permission_mode='askUser'  # or 'acceptEdits', 'rejectEdits'
+        )
+    
+    async def query_simple(self, prompt: str) -> str:
+        """Simple one-shot query."""
+        from claude_code_sdk import query
+        
+        result = []
+        async for message in query(prompt, self.default_options):
+            if hasattr(message, 'content'):
+                for block in message.content:
+                    if hasattr(block, 'text'):
+                        result.append(block.text)
+        return ''.join(result)
+    
+    async def interactive_session(self, initial_prompt: str):
+        """Interactive multi-turn session."""
+        async with ClaudeSDKClient(options=self.default_options) as client:
+            await client.query(initial_prompt)
+            
+            async for message in client.receive_response():
+                yield self._process_message(message)
+    
+    def _process_message(self, message):
+        """Process different message types."""
+        from claude_code_sdk import AssistantMessage, TextBlock, ToolUseBlock
+        
+        if isinstance(message, AssistantMessage):
+            for block in message.content:
+                if isinstance(block, TextBlock):
+                    return {"type": "text", "content": block.text}
+                elif isinstance(block, ToolUseBlock):
+                    return {"type": "tool_use", "tool": block.name, "input": block.input}
+        return {"type": "unknown", "data": str(message)}
+```
+
+## Query Patterns
+
+### Basic Query with Options
+```python
+from claude_code_sdk import query, ClaudeCodeOptions
+
+async def analyze_code(file_path: str) -> str:
+    """Analyze code file with Claude Code."""
+    options = ClaudeCodeOptions(
+        system_prompt="You are a code reviewer specializing in Python",
+        allowed_tools=["Read"],
+        max_turns=1,
+        cwd=Path(file_path).parent  # Set working directory
+    )
+    
+    prompt = f"Review the code in {file_path} and suggest improvements"
+    
+    async for message in query(prompt, options):
+        # Process response
+        if isinstance(message, AssistantMessage):
+            return extract_text(message)
+```
+
+### Tool Usage Configuration
+```python
+from claude_code_sdk import ClaudeCodeOptions
+
+# Different permission modes
+options_auto_accept = ClaudeCodeOptions(
+    allowed_tools=["Read", "Write", "Bash"],
+    permission_mode='acceptEdits'  # Auto-accept file edits
+)
+
+options_manual = ClaudeCodeOptions(
+    allowed_tools=["Read", "Write"],
+    permission_mode='askUser'  # Prompt for permission
+)
+
+options_readonly = ClaudeCodeOptions(
+    allowed_tools=["Read"],
+    permission_mode='rejectEdits'  # Reject all edits
+)
+
+# Specific tool configurations
+options_analysis = ClaudeCodeOptions(
+    allowed_tools=["Read", "Grep", "WebSearch"],  # Read-only analysis
+    system_prompt="Analyze codebase for security vulnerabilities"
+)
+
+options_generation = ClaudeCodeOptions(
+    allowed_tools=["Write", "Bash"],  # Code generation
+    system_prompt="Generate clean, well-documented code"
+)
+```
+
+## Message Processing
+
+### Handle Different Message Types
+```python
+from claude_code_sdk import (
+    AssistantMessage,
+    TextBlock,
+    ToolUseBlock,
+    ToolResultBlock,
+    UserMessage
+)
+
+async def process_claude_response(message):
+    """Process different Claude Code message types."""
+    
+    if isinstance(message, AssistantMessage):
+        texts = []
+        tools = []
+        
+        for block in message.content:
+            if isinstance(block, TextBlock):
+                texts.append(block.text)
+            elif isinstance(block, ToolUseBlock):
+                tools.append({
+                    "name": block.name,
+                    "input": block.input,
+                    "id": block.id
+                })
+        
+        return {
+            "type": "assistant",
+            "text": ''.join(texts),
+            "tools": tools
+        }
+    
+    elif isinstance(message, ToolResultBlock):
+        return {
+            "type": "tool_result",
+            "tool_use_id": message.tool_use_id,
+            "output": message.output,
+            "is_error": message.is_error
+        }
+    
+    elif isinstance(message, UserMessage):
+        return {
+            "type": "user",
+            "content": message.content
+        }
+    
+    return {"type": "unknown", "raw": str(message)}
+```
+
+## Error Handling
+
+### SDK-Specific Exceptions
+```python
+from claude_code_sdk import (
+    ClaudeSDKError,      # Base exception
+    CLINotFoundError,    # Claude Code not installed
+    CLIConnectionError,  # Connection issues
+    ProcessError,        # Process failed
+    CLIJSONDecodeError,  # JSON parsing issues
+)
+
+async def safe_query(prompt: str, options: ClaudeCodeOptions = None):
+    """Query with comprehensive error handling."""
+    try:
+        async for message in query(prompt, options):
+            yield message
+            
+    except CLINotFoundError:
+        raise HTTPException(
+            status_code=500,
+            detail="Claude Code CLI not installed. Run: npm install -g @anthropic-ai/claude-code"
+        )
+    
+    except CLIConnectionError as e:
+        logger.error(f"Connection to Claude Code failed: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Claude Code service unavailable"
+        )
+    
+    except ProcessError as e:
+        logger.error(f"Claude Code process failed with exit code {e.exit_code}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Processing failed: {e.message}"
+        )
+    
+    except CLIJSONDecodeError as e:
+        logger.error(f"Failed to parse Claude Code response: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail="Invalid response from Claude Code"
+        )
+    
+    except ClaudeSDKError as e:
+        logger.error(f"Claude SDK error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal Claude SDK error"
+        )
+```
+
+## Streaming Responses
+
+### FastAPI SSE Integration
+```python
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+from claude_code_sdk import query, ClaudeCodeOptions, AssistantMessage, TextBlock
+
+router = APIRouter()
+
+@router.post("/claude/stream")
+async def stream_claude_response(request: ClaudeRequest):
+    """Stream Claude Code responses via Server-Sent Events."""
+    
+    async def generate():
+        options = ClaudeCodeOptions(
+            system_prompt=request.system_prompt,
+            allowed_tools=request.allowed_tools,
+            max_turns=request.max_turns
+        )
+        
+        try:
+            async for message in query(request.prompt, options):
+                if isinstance(message, AssistantMessage):
+                    for block in message.content:
+                        if isinstance(block, TextBlock):
+                            # Send text as SSE
+                            yield f"data: {json.dumps({'text': block.text})}\n\n"
+                            
+            yield "data: [DONE]\n\n"
+            
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"  # Disable Nginx buffering
+        }
+    )
+```
+
+## Session Management
+
+### Interactive Sessions with Context
+```python
+class ClaudeSessionManager:
+    """Manage Claude Code interactive sessions."""
+    
+    def __init__(self):
+        self.sessions: dict[str, ClaudeSDKClient] = {}
+    
+    async def create_session(
+        self,
+        session_id: str,
+        options: ClaudeCodeOptions
+    ) -> ClaudeSDKClient:
+        """Create new Claude Code session."""
+        if session_id in self.sessions:
+            await self.close_session(session_id)
+        
+        client = ClaudeSDKClient(options=options)
+        await client.connect()
+        self.sessions[session_id] = client
+        return client
+    
+    async def get_session(self, session_id: str) -> ClaudeSDKClient:
+        """Get existing session or raise error."""
+        if session_id not in self.sessions:
+            raise ValueError(f"Session {session_id} not found")
+        return self.sessions[session_id]
+    
+    async def close_session(self, session_id: str) -> None:
+        """Close and cleanup session."""
+        if session_id in self.sessions:
+            client = self.sessions.pop(session_id)
+            await client.disconnect()
+    
+    async def cleanup_inactive(self, timeout_seconds: int = 3600):
+        """Clean up inactive sessions."""
+        # Implementation for session timeout
+        pass
+```
+
+## Testing with Claude Code SDK
+
+### Mock Patterns
+```python
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from claude_code_sdk import AssistantMessage, TextBlock
+
+@pytest.fixture
+def mock_claude_query():
+    """Mock Claude Code query function."""
+    async def _mock_query(prompt: str, options=None):
+        # Create mock response
+        mock_message = AssistantMessage(
+            content=[TextBlock(text="Mock response")]
+        )
+        yield mock_message
+    
+    return _mock_query
+
+@pytest.fixture
+def mock_claude_client():
+    """Mock Claude SDK Client."""
+    client = AsyncMock(spec=ClaudeSDKClient)
+    client.query = AsyncMock()
+    client.receive_response = AsyncMock()
+    return client
+
+async def test_claude_integration(mock_claude_query, monkeypatch):
+    """Test Claude Code integration."""
+    monkeypatch.setattr("claude_code_sdk.query", mock_claude_query)
+    
+    service = ClaudeCodeService()
+    result = await service.query_simple("Test prompt")
+    assert result == "Mock response"
+```
+
+## Performance Optimization
+
+### Connection Pooling
+```python
+class ClaudeCodePool:
+    """Connection pool for Claude Code sessions."""
+    
+    def __init__(self, max_size: int = 10):
+        self.pool: list[ClaudeSDKClient] = []
+        self.in_use: set[ClaudeSDKClient] = set()
+        self.max_size = max_size
+        self.lock = asyncio.Lock()
+    
+    async def acquire(self, options: ClaudeCodeOptions) -> ClaudeSDKClient:
+        """Get client from pool or create new."""
+        async with self.lock:
+            # Try to get from pool
+            if self.pool:
+                client = self.pool.pop()
+            elif len(self.in_use) < self.max_size:
+                client = ClaudeSDKClient(options=options)
+                await client.connect()
+            else:
+                # Wait for available client
+                await asyncio.sleep(0.1)
+                return await self.acquire(options)
+            
+            self.in_use.add(client)
+            return client
+    
+    async def release(self, client: ClaudeSDKClient):
+        """Return client to pool."""
+        async with self.lock:
+            self.in_use.discard(client)
+            if len(self.pool) < self.max_size:
+                self.pool.append(client)
+            else:
+                await client.disconnect()
+```
+
+## Best Practices
+
+- Always use async/await patterns
+- Set appropriate max_turns limits
+- Configure allowed_tools minimally
+- Handle all SDK exceptions explicitly
+- Use context managers for sessions
+- Set working directory for file operations
+- Implement timeouts for long operations
+- Cache responses when appropriate
+- Monitor Claude Code process health
+- Log all tool usage for audit

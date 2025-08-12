@@ -1,0 +1,309 @@
+2025-08-12 18:16:23 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:16:23 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:16:23 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:16:23 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:16:23 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:16:23 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:16:23 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:16:23 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:query:50 - Sending query to Claude: Test prompt...
+2025-08-12 18:16:30 | ERROR    | src.claude_sdk_server.services.claude_service:query:102 - Error in Claude SDK: object MagicMock can't be used in 'await' expression
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:query:50 - Sending query to Claude: Test prompt...
+2025-08-12 18:16:30 | ERROR    | src.claude_sdk_server.services.claude_service:query:102 - Error in Claude SDK: object MagicMock can't be used in 'await' expression
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:query:50 - Sending query to Claude: Test...
+2025-08-12 18:16:30 | ERROR    | src.claude_sdk_server.services.claude_service:query:102 - Error in Claude SDK: Authentication failed
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:query:50 - Sending query to Claude: Test...
+2025-08-12 18:16:30 | ERROR    | src.claude_sdk_server.services.claude_service:query:102 - Error in Claude SDK: Rate limit exceeded
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:stream_query:119 - Starting streaming query: Test prompt...
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:query:50 - Sending query to Claude: Test prompt...
+2025-08-12 18:16:30 | ERROR    | src.claude_sdk_server.services.claude_service:query:102 - Error in Claude SDK: object list can't be used in 'await' expression
+2025-08-12 18:16:30 | ERROR    | src.claude_sdk_server.services.claude_service:stream_query:138 - Error in streaming query: Claude SDK error: object list can't be used in 'await' expression
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:create_session:152 - Created session: test-conversation-123
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:close_session:167 - Closed session: test-conversation-123
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:16:30 | INFO     | src.claude_sdk_server.services.claude_service:query:50 - Sending query to Claude: Test...
+2025-08-12 18:16:30 | ERROR    | src.claude_sdk_server.services.claude_service:query:102 - Error in Claude SDK: Test error
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:17:00 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:17:08 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /health | Client: 127.0.0.1
+2025-08-12 18:17:08 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.001s
+2025-08-12 18:17:14 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:17:14 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:39 - Claude SDK client initialized successfully
+2025-08-12 18:17:14 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What is 2+2?...
+2025-08-12 18:17:14 | INFO     | src.claude_sdk_server.services.claude_service:query:50 - Sending query to Claude: What is 2+2?...
+2025-08-12 18:17:14 | INFO     | src.claude_sdk_server.services.claude_service:query:88 - Query completed successfully for conversation c53b341c-8a46-432d-958d-1fe657e1c72e
+2025-08-12 18:17:14 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.103s
+2025-08-12 18:17:21 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /openapi.json | Client: 127.0.0.1
+2025-08-12 18:17:21 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.004s
+2025-08-12 18:17:32 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:17:32 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 405 | Duration: 0.001s
+2025-08-12 18:17:32 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /favicon.ico | Client: 127.0.0.1
+2025-08-12 18:17:32 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 404 | Duration: 0.002s
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:19:24 | INFO     | src.claude_sdk_server.main:lifespan:28 - Shutting down application
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:19:48 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:19:57 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /health | Client: 127.0.0.1
+2025-08-12 18:19:57 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.001s
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:20:36 | INFO     | src.claude_sdk_server.main:lifespan:28 - Shutting down application
+2025-08-12 18:20:54 | INFO     | src.claude_sdk_server.main:lifespan:28 - Shutting down application
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:21:00 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:21:08 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /health | Client: 127.0.0.1
+2025-08-12 18:21:08 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.001s
+2025-08-12 18:21:16 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:21:16 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:46 - Anthropic client initialized successfully
+2025-08-12 18:21:16 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What is 2+2? Just give me the number....
+2025-08-12 18:21:16 | INFO     | src.claude_sdk_server.services.claude_service:query:57 - Sending query to Claude: What is 2+2? Just give me the number....
+2025-08-12 18:21:17 | INFO     | src.claude_sdk_server.services.claude_service:query:105 - Query completed successfully for conversation 53595882-9722-412f-8040-bf352fe27432
+2025-08-12 18:21:17 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 1.446s
+2025-08-12 18:21:24 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:21:24 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: Write a short Python function to calculate fibonac...
+2025-08-12 18:21:24 | INFO     | src.claude_sdk_server.services.claude_service:query:57 - Sending query to Claude: Write a short Python function to calculate fibonacci numbers....
+2025-08-12 18:21:28 | INFO     | src.claude_sdk_server.services.claude_service:query:105 - Query completed successfully for conversation b980ead9-4c0d-4530-ab55-a212625651fa
+2025-08-12 18:21:28 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 3.732s
+2025-08-12 18:21:33 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:21:33 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: Count from 1 to 5, one number per line....
+2025-08-12 18:21:33 | INFO     | src.claude_sdk_server.services.claude_service:stream_query:142 - Starting streaming query: Count from 1 to 5, one number per line....
+2025-08-12 18:21:33 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.001s
+2025-08-12 18:21:39 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/sessions | Client: 127.0.0.1
+2025-08-12 18:21:39 | INFO     | src.claude_sdk_server.services.claude_service:create_session:217 - Created session: 92ae9b6d-be56-4300-b3ec-1d3c2f8e8ec3
+2025-08-12 18:21:39 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 201 | Duration: 0.001s
+2025-08-12 18:21:39 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /api/v1/claude/sessions/92ae9b6d-be56-4300-b3ec-1d3c2f8e8ec3 | Client: 127.0.0.1
+2025-08-12 18:21:39 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.000s
+2025-08-12 18:21:41 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /docs | Client: 127.0.0.1
+2025-08-12 18:21:41 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.001s
+2025-08-12 18:21:42 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /openapi.json | Client: 127.0.0.1
+2025-08-12 18:21:42 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.005s
+2025-08-12 18:21:45 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:21:45 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: My name is Alice. Remember this....
+2025-08-12 18:21:45 | INFO     | src.claude_sdk_server.services.claude_service:query:57 - Sending query to Claude: My name is Alice. Remember this....
+2025-08-12 18:21:46 | INFO     | src.claude_sdk_server.services.claude_service:query:105 - Query completed successfully for conversation test-conversation-123
+2025-08-12 18:21:46 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 1.411s
+2025-08-12 18:21:52 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:21:52 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What is my name?...
+2025-08-12 18:21:52 | INFO     | src.claude_sdk_server.services.claude_service:query:57 - Sending query to Claude: What is my name?...
+2025-08-12 18:21:53 | INFO     | src.claude_sdk_server.services.claude_service:query:105 - Query completed successfully for conversation test-conversation-123
+2025-08-12 18:21:53 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 1.566s
+2025-08-12 18:24:26 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:24:26 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:24:26 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:24:26 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:43 - Claude Code SDK client configuration ready
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:24:31 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:24:38 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /health | Client: 127.0.0.1
+2025-08-12 18:24:38 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.000s
+2025-08-12 18:24:43 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:24:43 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:43 - Claude Code SDK client configuration ready
+2025-08-12 18:24:43 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What is 2+2? Just give me the number....
+2025-08-12 18:24:43 | INFO     | src.claude_sdk_server.services.claude_service:query:72 - Sending query to Claude Code SDK: What is 2+2? Just give me the number....
+2025-08-12 18:24:49 | INFO     | src.claude_sdk_server.services.claude_service:query:116 - Query completed successfully for conversation ef2e716e-5e97-4e99-bd13-363bc85d489d
+2025-08-12 18:24:49 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 6.213s
+2025-08-12 18:24:59 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:24:59 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: Create a simple Python function to calculate prime...
+2025-08-12 18:24:59 | INFO     | src.claude_sdk_server.services.claude_service:query:72 - Sending query to Claude Code SDK: Create a simple Python function to calculate prime numbers and write it to a file called primes.py...
+2025-08-12 18:27:27 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:27:27 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: List the current directory files...
+2025-08-12 18:27:27 | INFO     | src.claude_sdk_server.services.claude_service:query:72 - Sending query to Claude Code SDK: List the current directory files...
+2025-08-12 18:29:43 | INFO     | src.claude_sdk_server.services.claude_service:query:116 - Query completed successfully for conversation b79d2a8a-1894-4177-b2f2-6d61365efa3f
+2025-08-12 18:29:43 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 136.263s
+2025-08-12 18:31:12 | INFO     | src.claude_sdk_server.services.claude_service:query:116 - Query completed successfully for conversation bf9e2cdf-5e9b-48b7-8e68-f7d6a42224cc
+2025-08-12 18:31:12 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 373.092s
+2025-08-12 18:32:39 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /docs | Client: 127.0.0.1
+2025-08-12 18:32:39 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.001s
+2025-08-12 18:32:39 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /openapi.json | Client: 127.0.0.1
+2025-08-12 18:32:39 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.001s
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:40:41 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:40:48 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /health | Client: 127.0.0.1
+2025-08-12 18:40:48 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.000s
+2025-08-12 18:40:55 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:40:55 | WARNING  | src.claude_sdk_server.services.claude_service:_initialize_client:37 - No Anthropic API key found. Claude Code SDK will not be functional.
+2025-08-12 18:40:55 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What is 3+5?...
+2025-08-12 18:40:55 | INFO     | src.claude_sdk_server.services.claude_service:query:89 - Sending query to Claude Code SDK: What is 3+5?...
+2025-08-12 18:40:55 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:79 - Creating Claude Code SDK client with model: claude-sonnet-4-20250514
+2025-08-12 18:41:01 | INFO     | src.claude_sdk_server.services.claude_service:query:133 - Query completed successfully for conversation ec38080e-931d-427d-a0da-b48fd14c541e
+2025-08-12 18:41:01 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 6.709s
+2025-08-12 18:41:06 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:41:06 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What is 7+9?...
+2025-08-12 18:41:06 | INFO     | src.claude_sdk_server.services.claude_service:query:89 - Sending query to Claude Code SDK: What is 7+9?...
+2025-08-12 18:41:06 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:79 - Creating Claude Code SDK client with model: claude-opus-4-1-20250805
+2025-08-12 18:41:13 | INFO     | src.claude_sdk_server.services.claude_service:query:133 - Query completed successfully for conversation 3669ea4f-18e0-4269-b8c4-3f747c9b876e
+2025-08-12 18:41:13 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 6.576s
+2025-08-12 18:41:19 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:41:19 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What is 4+6?...
+2025-08-12 18:41:19 | INFO     | src.claude_sdk_server.services.claude_service:query:89 - Sending query to Claude Code SDK: What is 4+6?...
+2025-08-12 18:41:19 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:79 - Creating Claude Code SDK client with model: claude-sonnet-4-20250514
+2025-08-12 18:41:24 | INFO     | src.claude_sdk_server.services.claude_service:query:133 - Query completed successfully for conversation 7126fa83-0c88-4295-90f1-cf0994d2a78f
+2025-08-12 18:41:24 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 5.291s
+2025-08-12 18:41:34 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /openapi.json | Client: 127.0.0.1
+2025-08-12 18:41:34 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.003s
+2025-08-12 18:48:33 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/query | Client: 127.0.0.1
+2025-08-12 18:48:33 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 404 | Duration: 0.001s
+2025-08-12 18:48:41 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET /docs | Client: 127.0.0.1
+2025-08-12 18:48:41 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 0.000s
+2025-08-12 18:48:50 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | GET / | Client: 127.0.0.1
+2025-08-12 18:48:50 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 307 | Duration: 0.000s
+2025-08-12 18:49:11 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:49:11 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: My name is Alice and I love cats. Remember this ab...
+2025-08-12 18:49:11 | INFO     | src.claude_sdk_server.services.claude_service:query:89 - Sending query to Claude Code SDK: My name is Alice and I love cats. Remember this about me....
+2025-08-12 18:49:11 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:79 - Creating Claude Code SDK client with model: claude-sonnet-4-20250514
+2025-08-12 18:49:18 | INFO     | src.claude_sdk_server.services.claude_service:query:133 - Query completed successfully for conversation test-context-session
+2025-08-12 18:49:18 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 7.094s
+2025-08-12 18:49:26 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:49:26 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What did I tell you about myself? Do you remember ...
+2025-08-12 18:49:26 | INFO     | src.claude_sdk_server.services.claude_service:query:89 - Sending query to Claude Code SDK: What did I tell you about myself? Do you remember my name and what I love?...
+2025-08-12 18:49:26 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:79 - Creating Claude Code SDK client with model: claude-sonnet-4-20250514
+2025-08-12 18:49:33 | INFO     | src.claude_sdk_server.services.claude_service:query:133 - Query completed successfully for conversation test-context-session
+2025-08-12 18:49:33 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 6.846s
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:50:36 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:50:45 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:50:45 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:43 - Claude Code SDK client configuration ready
+2025-08-12 18:50:45 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: My name is Alice and I love cats. Remember this ab...
+2025-08-12 18:50:45 | INFO     | src.claude_sdk_server.services.claude_service:query:105 - Sending query to Claude Code SDK: My name is Alice and I love cats. Remember this about me....
+2025-08-12 18:50:45 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:84 - Creating new Claude Code SDK client with model: claude-sonnet-4-20250514 for conversation: test-context-session-fixed
+2025-08-12 18:50:45 | ERROR    | src.claude_sdk_server.services.claude_service:query:177 - Error calling Claude Code SDK: Not connected. Call connect() first.
+2025-08-12 18:50:45 | ERROR    | src.claude_sdk_server.api.routers.claude_router:query_claude:58 - Claude SDK error: Claude Code SDK error: Not connected. Call connect() first.
+2025-08-12 18:50:45 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 400 | Duration: 0.008s
+2025-08-12 18:50:58 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:50:58 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: My name is Alice and I love cats. Remember this ab...
+2025-08-12 18:50:58 | INFO     | src.claude_sdk_server.services.claude_service:query:105 - Sending query to Claude Code SDK: My name is Alice and I love cats. Remember this about me....
+2025-08-12 18:50:58 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:67 - Reusing existing Claude Code SDK client for conversation: test-context-session-fixed
+2025-08-12 18:50:58 | ERROR    | src.claude_sdk_server.services.claude_service:query:177 - Error calling Claude Code SDK: Not connected. Call connect() first.
+2025-08-12 18:50:58 | ERROR    | src.claude_sdk_server.api.routers.claude_router:query_claude:58 - Claude SDK error: Claude Code SDK error: Not connected. Call connect() first.
+2025-08-12 18:50:58 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 400 | Duration: 0.001s
+2025-08-12 18:51:43 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:51:43 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: My name is Alice and I love cats. Remember this ab...
+2025-08-12 18:51:43 | INFO     | src.claude_sdk_server.services.claude_service:query:105 - Sending query to Claude Code SDK: My name is Alice and I love cats. Remember this about me....
+2025-08-12 18:51:43 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:84 - Creating new Claude Code SDK client with model: claude-sonnet-4-20250514 for conversation: test-context-session-v2
+2025-08-12 18:51:43 | ERROR    | src.claude_sdk_server.services.claude_service:query:177 - Error calling Claude Code SDK: Not connected. Call connect() first.
+2025-08-12 18:51:43 | ERROR    | src.claude_sdk_server.api.routers.claude_router:query_claude:58 - Claude SDK error: Claude Code SDK error: Not connected. Call connect() first.
+2025-08-12 18:51:43 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 400 | Duration: 0.001s
+2025-08-12 18:52:32 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:52:32 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: My name is Alice and I love cats. Remember this ab...
+2025-08-12 18:52:32 | INFO     | src.claude_sdk_server.services.claude_service:query:105 - Sending query to Claude Code SDK: My name is Alice and I love cats. Remember this about me....
+2025-08-12 18:52:32 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:84 - Creating new Claude Code SDK client with model: claude-sonnet-4-20250514 for conversation: test-context-session-v3
+2025-08-12 18:52:32 | ERROR    | src.claude_sdk_server.services.claude_service:query:177 - Error calling Claude Code SDK: Not connected. Call connect() first.
+2025-08-12 18:52:32 | ERROR    | src.claude_sdk_server.api.routers.claude_router:query_claude:58 - Claude SDK error: Claude Code SDK error: Not connected. Call connect() first.
+2025-08-12 18:52:32 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 400 | Duration: 0.001s
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.core.logging:setup_logging:45 - Logging initialized - Level: INFO
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.core.logging:setup_logging:46 - Environment: development
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.core.logging:setup_logging:47 - Debug mode: False
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:12 - Setting up CORS middleware
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:13 - CORS origins: ['http://localhost:3000', 'http://localhost:8080']
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.api.middleware.cors:setup_cors:23 - CORS middleware configured successfully
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:91 - Setting up logging middleware
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.api.middleware.logging:setup_logging_middleware:99 - Logging middleware configured successfully
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.main:lifespan:21 - Starting Claude SDK Server v0.1.0
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.main:lifespan:22 - Environment: development
+2025-08-12 18:52:41 | INFO     | src.claude_sdk_server.main:lifespan:23 - Debug mode: False
+2025-08-12 18:52:52 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:52:52 | INFO     | src.claude_sdk_server.services.claude_service:_initialize_client:43 - Claude Code SDK client configuration ready
+2025-08-12 18:52:52 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: My name is Alice and I love cats. Remember this ab...
+2025-08-12 18:52:52 | INFO     | src.claude_sdk_server.services.claude_service:query:102 - Sending query to Claude Code SDK: My name is Alice and I love cats. Remember this about me....
+2025-08-12 18:52:52 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:92 - Creating Claude Code SDK client with model: claude-sonnet-4-20250514 for conversation: test-context-session-v4
+2025-08-12 18:52:59 | INFO     | src.claude_sdk_server.services.claude_service:query:145 - Query completed successfully for conversation test-context-session-v4
+2025-08-12 18:52:59 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 7.106s
+2025-08-12 18:53:05 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:53:05 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: What do you remember about me? What is my name and...
+2025-08-12 18:53:05 | INFO     | src.claude_sdk_server.services.claude_service:query:102 - Sending query to Claude Code SDK: What do you remember about me? What is my name and what do I love?...
+2025-08-12 18:53:05 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:92 - Creating Claude Code SDK client with model: claude-sonnet-4-20250514 for conversation: test-context-session-v4
+2025-08-12 18:54:36 | INFO     | src.claude_sdk_server.services.claude_service:query:145 - Query completed successfully for conversation test-context-session-v4
+2025-08-12 18:54:36 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 91.697s
+2025-08-12 18:54:50 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:25 - REQUEST | POST /api/v1/claude/query | Client: 127.0.0.1
+2025-08-12 18:54:50 | INFO     | src.claude_sdk_server.api.routers.claude_router:query_claude:44 - Processing query request: I also have a dog named Max. Can you tell me about...
+2025-08-12 18:54:50 | INFO     | src.claude_sdk_server.services.claude_service:query:102 - Sending query to Claude Code SDK: I also have a dog named Max. Can you tell me about both my pets now?...
+2025-08-12 18:54:50 | INFO     | src.claude_sdk_server.services.claude_service:_get_client_for_session:92 - Creating Claude Code SDK client with model: claude-sonnet-4-20250514 for conversation: test-context-session-v4
+2025-08-12 18:56:20 | INFO     | src.claude_sdk_server.services.claude_service:query:145 - Query completed successfully for conversation test-context-session-v4
+2025-08-12 18:56:20 | INFO     | src.claude_sdk_server.api.middleware.logging:dispatch:41 - RESPONSE | Status: 200 | Duration: 89.946s

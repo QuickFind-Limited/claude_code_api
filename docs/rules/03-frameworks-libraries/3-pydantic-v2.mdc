@@ -1,0 +1,171 @@
+---
+description: Pydantic v2 data validation and serialization patterns
+globs: ["**/models/**/*.py", "**/schemas/**/*.py", "**/dto/**/*.py"]
+alwaysApply: true
+---
+
+## Model Definition
+
+- Inherit from BaseModel
+- Use ConfigDict for configuration
+- Field with metadata and constraints
+- Computed fields with @computed_field
+- Model validators with @model_validator
+- Field validators with @field_validator
+
+## Field Types
+
+- Annotated for constraints
+- Optional for nullable fields
+- Union types for multiple options
+- Literal for exact values
+- Constrained types (conint, constr)
+- Custom types with __get_validators__
+
+## Validation Patterns
+
+- Field-level validation first
+- Model-level for cross-field
+- Before/after validation modes
+- Custom error messages
+- Validation context passing
+- Strict mode when needed
+
+## Serialization
+
+- Model_dump() for dict conversion
+- Model_dump_json() for JSON
+- Exclude unset fields
+- Include/exclude specific fields
+- Custom serializers
+- Alias for field mapping
+
+## Configuration
+
+```python
+from pydantic import BaseModel, ConfigDict
+
+class ChatRequest(BaseModel):
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        use_enum_values=True,
+        extra="forbid",
+        json_schema_extra={
+            "example": {
+                "messages": [{"role": "user", "content": "Hello"}]
+            }
+        }
+    )
+```
+
+## Field Constraints
+
+```python
+from pydantic import Field, field_validator
+from typing import Annotated
+
+class FileUpload(BaseModel):
+    filename: Annotated[str, Field(min_length=1, max_length=255)]
+    size: Annotated[int, Field(gt=0, le=10_485_760)]  # Max 10MB
+    content_type: Literal["image/png", "image/jpeg", "application/pdf"]
+    
+    @field_validator("filename")
+    @classmethod
+    def validate_filename(cls, v: str) -> str:
+        if "/" in v or "\\" in v:
+            raise ValueError("Invalid filename")
+        return v
+```
+
+## Model Inheritance
+
+- Base models for common fields
+- Mixins for shared behavior
+- Generic models with TypeVar
+- Discriminated unions
+- Forward references
+- Recursive models
+
+## Custom Validators
+
+```python
+@model_validator(mode="after")
+def validate_session(self) -> "ChatRequest":
+    if self.session_id and not self.messages:
+        raise ValueError("Session requires messages")
+    return self
+
+@field_validator("content", mode="before")
+@classmethod
+def clean_content(cls, v: Any) -> str:
+    if isinstance(v, bytes):
+        return v.decode("utf-8")
+    return str(v).strip()
+```
+
+## Error Handling
+
+- ValidationError exceptions
+- Error location tracking
+- Custom error messages
+- Error codes for types
+- Nested error structures
+- Formatting error responses
+
+## Performance
+
+- Lazy validation option
+- Validate_call decorator
+- Cached property computation
+- Defer validation option
+- Partial model updates
+- Schema optimization
+
+## JSON Schema
+
+- Generate OpenAPI schemas
+- Custom schema modifications
+- Example values in schema
+- Description annotations
+- Schema extra metadata
+- Discriminator for unions
+
+## Testing Models
+
+- Model factories
+- Invalid data testing
+- Edge case validation
+- Serialization round-trips
+- Schema generation tests
+- Performance benchmarks
+
+## Common Patterns
+
+```python
+# Request/Response separation
+class ChatRequestBase(BaseModel):
+    messages: list[Message]
+    system_prompt: str | None = None
+
+class ChatRequest(ChatRequestBase):
+    session_id: str | None = None
+    stream: bool = False
+
+class ChatResponse(ChatRequestBase):
+    id: str
+    created: datetime
+    usage: TokenUsage
+    
+# Settings with environment
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    anthropic_api_key: SecretStr
+    redis_url: str = "redis://localhost"
+    
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
+```
