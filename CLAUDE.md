@@ -504,3 +504,51 @@ This configuration provides:
 # Claude Code Documentation:
 https://docs.anthropic.com/en/docs/claude-code/sdk#python
 Use it before doing anything related to Claude Code.
+
+---
+
+# 🔧 Odoo ERP Integration
+
+## Overview
+Claude Code API can generate Python code for Odoo ERP operations without requiring MCP tools. All operations use JSON-RPC protocol over HTTPS with async/await patterns.
+
+## Quick Start
+```python
+import asyncio
+from odoo_templates.odoo_connection import OdooConnection
+
+async def main():
+    async with OdooConnection() as odoo:
+        # Count products
+        count = await odoo.search_count('product.template')
+        print(f"Total products: {count}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Available Templates
+Located in `odoo_templates/`:
+- `odoo_connection.py` - Base connection class
+- `02_crud_operations.py` - Create, Read, Update, Delete
+- `03_search_and_filter.py` - Search patterns and filters
+- `04_product_management.py` - Product operations
+- `05_sales_orders.py` - Sales order management
+- `06_invoicing.py` - Invoice and billing
+- `07_batch_operations.py` - Bulk operations
+- `ODOO_API_GUIDE.md` - Complete reference
+
+## Key Models
+- `res.partner` - Contacts (customers/suppliers)
+- `product.template` - Products
+- `sale.order` - Sales orders
+- `account.move` - Invoices
+
+## Important Notes
+- Always authenticate before operations
+- Use search_read for efficiency
+- Specify fields to reduce data transfer
+- Handle errors gracefully
+- Some fields are computed and can't be searched
+
+See `CLAUDE_ODOO_SYSTEM_PROMPT.md` for complete integration details.
