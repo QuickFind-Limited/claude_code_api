@@ -1,16 +1,129 @@
 # Python-generated files
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
 wheels/
-*.egg-info
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
 # Virtual environments
+venv/
+ENV/
+env/
 .venv
+.ENV
+.env.local
+.env.*.local
+odoo_env/
+*_env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+credentials/
+
+# Logs
+*.log
+logs/
+server.log
+server_new.log
+app.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+*.cover
+.hypothesis/
+.coverage.*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# PyCharm
+.idea/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
 
 # AIDD - AI-Driven Dev
-#
-# You might want to ignore the following files and directories:
-#
-aidd* # AIDD installation folder
+aidd*
+
+# Claude Code specific
+.claude/
+claude_sessions/
+*.session
+
+# Backup files
+*.bak
+*.backup
+*~
+*.tmp
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+desktop.ini
+
+# Package manager files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Temporary files
+tmp/
+temp/
+*.temp
