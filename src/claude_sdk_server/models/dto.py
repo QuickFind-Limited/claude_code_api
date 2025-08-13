@@ -1,6 +1,7 @@
 """Data Transfer Objects for Claude SDK Server."""
 
-from typing import Optional, List, Dict, Any, Literal
+from typing import Any, Dict, List, Literal, Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -27,10 +28,10 @@ class QueryRequest(BaseModel):
         description="Sampling temperature"
     )
     max_tokens: int = Field(
-        default=1000,
+        default=8000,
         ge=1,
-        le=4096,
-        description="Maximum tokens to generate"
+        le=32000,
+        description="Maximum thinking tokens budget (capped to 32,000)"
     )
     stream: bool = Field(
         default=False,
@@ -48,13 +49,22 @@ class QueryRequest(BaseModel):
         None,
         description="Tools to enable for this query"
     )
+    disallowed_tools: Optional[List[str]] = Field(
+        None,
+        description="Tools to explicitly disallow for this query"
+    )
+    # Accept dict (structured), str (path/JSON), aligning with ClaudeCodeOptions
+    mcp_servers: Optional[Dict[str, Any] | str] = Field(
+        None,
+        description="MCP server configurations for external tools"
+    )
     
     @field_validator('max_tokens')
     @classmethod
     def validate_max_tokens(cls, v: int) -> int:
         """Validate max_tokens is within acceptable range."""
-        if v > 4096:
-            raise ValueError("max_tokens cannot exceed 4096")
+        if v > 32000:
+            raise ValueError("max_tokens cannot exceed 32000")
         return v
 
 

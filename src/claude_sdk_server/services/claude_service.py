@@ -2,20 +2,16 @@
 
 import os
 import uuid
-from typing import Optional, Dict, Any, AsyncGenerator, List
 from datetime import datetime
+from typing import Any, AsyncGenerator, Dict, Optional
 
-from claude_code_sdk import ClaudeSDKClient, ClaudeCodeOptions
+from claude_code_sdk import ClaudeCodeOptions, ClaudeSDKClient
 from loguru import logger
 
-from ..models.dto import QueryRequest, QueryResponse, StreamChunk
-from ..models.errors import (
-    AuthenticationError,
-    RateLimitError,
-    SDKError,
-    TimeoutError
-)
 from ..core.config import settings
+from ..models.dto import QueryRequest, QueryResponse, StreamChunk
+from ..models.errors import (AuthenticationError, RateLimitError, SDKError,
+                             TimeoutError)
 
 
 class ClaudeService:
@@ -66,7 +62,7 @@ class ClaudeService:
         claude_model = self._map_model_name(request.model)
         
         # Build system prompt with conversation history if available
-        system_prompt = "You are Claude, a helpful AI assistant."
+        system_prompt = """You are a report generation assistant for high SKUs retail brands operation manager. Use tools as much as possible. For all questions related to retail in general, use Odoo tools."""
         
         if conversation_id in self._sessions:
             messages = self._sessions[conversation_id].get("messages", [])
@@ -78,16 +74,81 @@ class ClaudeService:
                     system_prompt += f"{role}: {content}\n"
                 system_prompt += "\nPlease respond to the following message while maintaining context from our conversation history."
         
+        # Default tools including common MCP tools (explicitly exclude web search providers)
+        default_tools = [
+            # Basic Claude Code tools
+            "Bash", "Read", "Write", "Edit", "MultiEdit",
+            "Glob", "Grep", "LS",
+            "TodoWrite", "ExitPlanMode", "NotebookEdit",
+            "BashOutput", "KillBash", "Task",
+            # Allowed MCP servers/tools
+            "mcp__odoo_mcp",
+        ]
+
+        # Strict allowlist to prevent accidental enabling of external search providers
+        allowed_whitelist = set(default_tools)
+
+        # Define disabled tool identifiers (case-insensitive match)
+        disabled_exact = {"websearch", "webfetch"}
+        disabled_prefixes = [
+            "mcp__perplexity",
+            "mcp__perplexity-ask",
+            "mcp__firecrawl",
+            "mcp__context7",
+        ]
+
+        def _is_disabled_tool(tool_name: str) -> bool:
+            name_l = tool_name.lower()
+            if name_l in disabled_exact:
+                return True
+            return any(name_l.startswith(prefix) for prefix in disabled_prefixes)
+        
+        # Compute allowed tools with enforced filtering and strict allowlist
+        requested_tools = request.tools or default_tools
+        filtered_allowed_tools = [
+            t for t in requested_tools
+            if (t in allowed_whitelist) and (not _is_disabled_tool(t))
+        ]
+        # If user provided only disallowed/unknown tools, fall back to safe defaults
+        if not filtered_allowed_tools:
+            filtered_allowed_tools = list(default_tools)
+
+        # Build disallowed list by combining explicit disallowed and enforced blocks
+        enforced_disallowed = [
+            "WebSearch", "WebFetch",
+            # Perplexity
+            "mcp__perplexity", "mcp__perplexity-ask", "mcp__perplexity-ask__perplexity_ask",
+            # Firecrawl
+            "mcp__Firecrawl", "mcp__firecrawl",
+            # Context7
+            "mcp__context7",
+        ]
+        combined_disallowed = list({*(request.disallowed_tools or []), *enforced_disallowed})
+
         # Create options for this session
-        options = ClaudeCodeOptions(
-            model=claude_model,  # Pass the mapped model
-            system_prompt=system_prompt,
-            max_turns=100,  # Allow long conversations
-            max_thinking_tokens=request.max_tokens if request.max_tokens <= 8000 else 8000,
-            allowed_tools=request.tools or [
-                "Bash", "Read", "Write", "WebSearch", "Glob", "Grep"
-            ]
-        )
+        options_dict = {
+            "model": claude_model,  # Pass the mapped model
+            "system_prompt": system_prompt,
+            "max_turns": 100,  # Allow long conversations
+            "max_thinking_tokens": request.max_tokens if request.max_tokens <= 32000 else 32000,
+            "allowed_tools": filtered_allowed_tools
+        }
+        
+        # Add MCP servers configuration if provided, otherwise use from settings
+        if request.mcp_servers:
+            options_dict["mcp_servers"] = request.mcp_servers
+        elif settings.mcp_servers:
+            options_dict["mcp_servers"] = settings.mcp_servers
+        
+        # Add disallowed tools (explicit + enforced)
+        if combined_disallowed:
+            options_dict["disallowed_tools"] = combined_disallowed
+
+        dropped = [t for t in requested_tools if _is_disabled_tool(t)]
+        if dropped:
+            logger.info(f"Filtered disallowed tools from allowed list: {dropped}")
+        
+        options = ClaudeCodeOptions(**options_dict)
         
         logger.info(f"Creating Claude Code SDK client with model: {claude_model} for conversation: {conversation_id}")
         
@@ -116,25 +177,85 @@ class ClaudeService:
             client = await self._get_client_for_session(conversation_id, request)
             
             full_response = ""
+            tools_used = []
+            tool_details = []  # Store detailed tool information
             
             # Use Claude Code SDK with proper connection handling
             async with client:
                 # Send the query
                 await client.query(request.prompt)
+                logger.info("Query sent to Claude. Awaiting response...")
                 
-                # Collect the response
+                # Collect the response and track tool usage
                 async for message in client.receive_response():
-                    if hasattr(message, 'content'):
+                    # Log the message type for debugging
+                    message_type = type(message).__name__
+                    logger.debug(f"Received message type: {message_type}")
+                    
+                    # Check for AssistantMessage with content
+                    if message_type == 'AssistantMessage' and hasattr(message, 'content'):
+                        # Process each content block
                         for block in message.content:
-                            if hasattr(block, 'text'):
-                                full_response += block.text
-                            elif hasattr(block, 'type') and block.type == 'text':
-                                full_response += getattr(block, 'text', str(block))
-                    elif hasattr(message, 'text'):
-                        full_response += message.text
-                    else:
-                        # Fallback: convert message to string
-                        full_response += str(message)
+                            block_str = str(block)
+                            logger.debug(f"Processing block: {block_str[:200]}")
+                            
+                            # Check if it's a ToolUseBlock
+                            if 'ToolUseBlock' in block_str:
+                                # Extract tool info from the string representation
+                                # Format: ToolUseBlock(id='...', name='tool_name', input={...})
+                                try:
+                                    # Extract name
+                                    name_start = block_str.find("name='") + 6
+                                    if name_start > 5:
+                                        name_end = block_str.find("'", name_start)
+                                        tool_name = block_str[name_start:name_end]
+                                    else:
+                                        # Try with double quotes
+                                        name_start = block_str.find('name="') + 6
+                                        name_end = block_str.find('"', name_start)
+                                        tool_name = block_str[name_start:name_end]
+                                    
+                                    # Extract id
+                                    id_start = block_str.find("id='") + 4
+                                    if id_start > 3:
+                                        id_end = block_str.find("'", id_start)
+                                        tool_id = block_str[id_start:id_end]
+                                    else:
+                                        tool_id = None
+                                    
+                                    if tool_name and tool_name not in tools_used:
+                                        tools_used.append(tool_name)
+                                        tool_details.append({
+                                            "tool": tool_name,
+                                            "id": tool_id,
+                                            "timestamp": datetime.utcnow().isoformat()
+                                        })
+                                        logger.info(f"🔧 Tool used: {tool_name} (ID: {tool_id})")
+                                except Exception as e:
+                                    logger.debug(f"Error parsing tool block: {e}")
+                            
+                            # Check if it's a TextBlock
+                            elif 'TextBlock' in block_str:
+                                # Extract text from TextBlock(text="...")
+                                try:
+                                    text_start = block_str.find('text="') + 6
+                                    if text_start > 5:
+                                        text_end = block_str.find('")', text_start)
+                                        if text_end == -1:
+                                            text_end = len(block_str) - 2
+                                        text_content = block_str[text_start:text_end]
+                                        # Unescape basic sequences
+                                        text_content = text_content.replace('\\n', '\n').replace('\\t', '\t').replace("\\'", "'").replace('\\"', '"')
+                                        full_response += text_content
+                                except Exception as e:
+                                    logger.debug(f"Error parsing text block: {e}")
+                    
+                    # Also check for system messages and result messages
+                    elif message_type == 'ResultMessage' and hasattr(message, 'result'):
+                        # The final result contains the full response
+                        if not full_response:
+                            full_response = message.result
+                        logger.debug(f"Result message received with {len(message.result)} chars")
             
             # Store in session
             self._sessions[conversation_id]["messages"].extend([
@@ -143,6 +264,7 @@ class ClaudeService:
             ])
             
             logger.info(f"Query completed successfully for conversation {conversation_id}")
+            logger.info(f"Total tools used: {len(tools_used)} - {tools_used}")
             
             # Estimate token usage (approximation)
             prompt_tokens = len(request.prompt.split())
@@ -164,7 +286,8 @@ class ClaudeService:
                     "claude_code_sdk": True,
                     "requested_model": request.model,  # Original request
                     "actual_model": claude_model,  # Mapped model
-                    "tools_used": request.tools or [],
+                    "tools_used": tools_used,  # Return the actual tools used, not the allowed tools
+                    "tool_details": tool_details if tool_details else None,  # Include detailed tool information
                     "session_message_count": len(self._sessions[conversation_id]["messages"])
                 }
             )
