@@ -7,6 +7,7 @@ A minimal MVP REST API server that wraps the Claude Code SDK for easy HTTP acces
 - **Real Claude Code SDK Integration**: Uses the official `claude-code-sdk` package (not mocks)
 - **Model Selection**: Support for both Claude Opus and Sonnet models
 - **Conversation Context**: Maintains conversation history across requests
+- **MCP Tool Support**: Full support for MCP (Model Context Protocol) tools including Perplexity, Context7, Firecrawl, Odoo, and more
 - **Streaming Support**: Server-Sent Events (SSE) for real-time streaming responses
 - **Session Management**: Create, manage, and close conversation sessions
 - **FastAPI Framework**: Modern, fast web framework with automatic API documentation
@@ -24,6 +25,9 @@ A minimal MVP REST API server that wraps the Claude Code SDK for easy HTTP acces
   - `stream` (boolean): Enable streaming response
   - `max_tokens` (int): Maximum tokens to generate
   - `temperature` (float): Sampling temperature (0.0-1.0)
+  - `tools` (array, optional): List of allowed tools (default includes basic tools and MCP servers)
+  - `disallowed_tools` (array, optional): List of explicitly disallowed tools
+  - `mcp_servers` (object, optional): MCP server configurations for external tools
 
 ### Session Management
 - **POST** `/api/v1/claude/sessions` - Create a new conversation session
@@ -122,6 +126,32 @@ curl -X POST "http://localhost:8000/api/v1/claude/query" \
   }'
 ```
 
+### Using MCP Tools
+```bash
+# Example with Perplexity for web search
+curl -X POST "http://localhost:8000/api/v1/claude/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Search for the latest news about AI developments using Perplexity",
+    "model": "sonnet",
+    "tools": ["mcp__perplexity-ask", "WebSearch", "Read", "Write"]
+  }'
+
+# Example with custom allowed tools
+curl -X POST "http://localhost:8000/api/v1/claude/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Help me with this task",
+    "model": "sonnet",
+    "tools": [
+      "Read", "Write", "Edit",
+      "mcp__context7",
+      "mcp__Firecrawl",
+      "mcp__odoo_mcp"
+    ]
+  }'
+```
+
 ## 🏗️ Architecture
 
 The server follows a clean architecture pattern:
@@ -157,6 +187,49 @@ uv run pytest --cov=src --cov-report=html
 # Run specific test file
 uv run pytest tests/test_claude_service.py -v
 ```
+
+## 🔧 MCP Tools Configuration
+
+The server supports MCP (Model Context Protocol) tools for enhanced capabilities:
+
+### Default Enabled MCP Servers
+By default, the following MCP servers are enabled:
+- **perplexity-ask**: Web search and research capabilities
+- **context7**: Documentation and library reference
+- **Firecrawl**: Web scraping and data extraction
+- **odoo_mcp**: Odoo ERP integration
+- **playwright**: Browser automation
+
+### Tool Naming Convention
+MCP tools follow the pattern: `mcp__<server_name>__<tool_name>`
+
+Examples:
+- `mcp__perplexity-ask__perplexity_ask` - Specific tool
+- `mcp__perplexity-ask` - All tools from Perplexity server
+- `mcp__context7` - All tools from Context7 server
+
+### Custom MCP Server Configuration
+You can configure custom MCP servers in your request:
+
+```json
+{
+  "prompt": "Your query",
+  "mcp_servers": {
+    "custom_server": {
+      "command": "npx",
+      "args": ["-y", "@your/mcp-server"],
+      "env": {
+        "API_KEY": "your-key"
+      }
+    }
+  }
+}
+```
+
+### Security Considerations
+- Use `disallowed_tools` to block dangerous operations
+- Carefully review which MCP servers you enable
+- Consider limiting tools in production environments
 
 ## 🔍 Conversation Context Implementation
 

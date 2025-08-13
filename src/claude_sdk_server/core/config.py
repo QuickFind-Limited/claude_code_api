@@ -1,11 +1,11 @@
 """Configuration management for Claude SDK Server."""
 
-import os
-from typing import Optional, List
 from functools import lru_cache
+from typing import Any, Dict, List, Optional
+
+from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     )
     claude_max_tokens: int = Field(default=4096, env="CLAUDE_MAX_TOKENS")
     claude_timeout: int = Field(default=60, env="CLAUDE_TIMEOUT")
+    
+    # MCP server configurations (optional)
+    # Accept dict (inline config) or str (path/JSON string) to match SDK expectations
+    mcp_servers: Optional[Dict[str, Any] | str] = Field(default=None, env="MCP_SERVERS")
     
     # CORS settings
     cors_origins: List[str] = Field(
