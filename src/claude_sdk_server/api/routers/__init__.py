@@ -1,5 +1,5 @@
 """API routers package."""
 
-from .claude_router import router, health_router
+from src.claude_sdk_server.api.routers.claude_router import router
 
-__all__ = ["router", "health_router"]
+__all__ = ["router"]

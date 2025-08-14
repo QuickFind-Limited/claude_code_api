@@ -1,16 +1,57 @@
-# Python-generated files
+# Python
 __pycache__/
-*.py[oc]
-build/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
 dist/
+build/
 wheels/
-*.egg-info
+.Python
+.pytest_cache/
+.ruff_cache/
 
 # Virtual environments
-.venv
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/*.log
+logs/*.pid
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# UV
+.uv/
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Temporary files
+*.tmp
+.temp/
+tmp/
 
 # AIDD - AI-Driven Dev
-#
-# You might want to ignore the following files and directories:
-#
-aidd* # AIDD installation folder
+aidd*
