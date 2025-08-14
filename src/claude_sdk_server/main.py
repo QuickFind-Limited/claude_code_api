@@ -1,7 +1,14 @@
 """Minimal Claude SDK Server."""
 
+import logging
 from fastapi import FastAPI
 from src.claude_sdk_server.api.routers.claude_router import router as claude_router
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 # Create FastAPI application
 app = FastAPI(

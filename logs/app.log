@@ -1,7 +1,20 @@
-INFO:     Started server process [59168]
+INFO:     Started server process [83668]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:58987 - "GET /api/v1/health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58991 - "POST /api/v1/query HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59066 - "POST /api/v1/query HTTP/1.1" 200 OK
+2025-08-14 16:48:18,503 - src.claude_sdk_server.services.claude_service - WARNING - ANTHROPIC_API_KEY not found in environment
+2025-08-14 16:48:18,503 - src.claude_sdk_server.services.claude_service - INFO - Querying with prompt: How many products do we have?...
+2025-08-14 16:48:21,531 - src.claude_sdk_server.services.claude_service - INFO - Received message type: SystemMessage
+2025-08-14 16:48:25,126 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:48:26,718 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:48:26,777 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:48:26,777 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
+2025-08-14 16:48:26,789 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 5
+INFO:     127.0.0.1:60601 - "POST /api/v1/query HTTP/1.1" 200 OK
+2025-08-14 16:48:33,703 - src.claude_sdk_server.services.claude_service - WARNING - ANTHROPIC_API_KEY not found in environment
+2025-08-14 16:48:33,703 - src.claude_sdk_server.services.claude_service - INFO - Querying with prompt: Say hello and tell me what 2+2 equals...
+2025-08-14 16:48:36,415 - src.claude_sdk_server.services.claude_service - INFO - Received message type: SystemMessage
+2025-08-14 16:48:38,927 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:48:38,935 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
+2025-08-14 16:48:38,950 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 3
+INFO:     127.0.0.1:60702 - "POST /api/v1/query HTTP/1.1" 200 OK
