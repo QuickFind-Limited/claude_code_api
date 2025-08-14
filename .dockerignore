@@ -1,0 +1,81 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Documentation
+docs/memory-bank/
+docs/rules/
+docs/tasks/
+*.md
+!README.md
+
+# Logs
+logs/*.log
+logs/*.pid
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# UV cache
+.uv/
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Mac
+.DS_Store
+
+# AIDD
+aidd*
+.claude/
+.cursor/
+.mcp.json
+
+# Temporary files
+*.tmp
+.temp/
+tmp/

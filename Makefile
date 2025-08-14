@@ -175,6 +175,72 @@ test: health
 
 # Full setup and start
 all: setup start
+
+# Docker commands
+.PHONY: docker-build docker-run docker-stop docker-logs docker-shell docker-clean docker-compose-up docker-compose-down
+
+# Build Docker image
+docker-build:
+	@echo "$(GREEN)Building Docker image...$(NC)"
+	@docker build -t claude-sdk-server:latest .
+	@echo "$(GREEN)Docker image built successfully!$(NC)"
+
+# Run Docker container
+docker-run:
+	@echo "$(GREEN)Starting Docker container...$(NC)"
+	@docker run -d \
+		--name claude-sdk-server \
+		-p $(PORT):8000 \
+		-e ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY}" \
+		-v $(PWD)/logs:/app/logs \
+		claude-sdk-server:latest
+	@echo "$(GREEN)Container started at http://$(HOST):$(PORT)$(NC)"
+
+# Stop Docker container
+docker-stop:
+	@echo "$(YELLOW)Stopping Docker container...$(NC)"
+	@docker stop claude-sdk-server || true
+	@docker rm claude-sdk-server || true
+	@echo "$(GREEN)Container stopped$(NC)"
+
+# View Docker logs
+docker-logs:
+	@echo "$(GREEN)Docker container logs:$(NC)"
+	@docker logs -f claude-sdk-server
+
+# Shell into Docker container
+docker-shell:
+	@echo "$(GREEN)Opening shell in Docker container...$(NC)"
+	@docker exec -it claude-sdk-server /bin/bash
+
+# Clean Docker images
+docker-clean:
+	@echo "$(YELLOW)Cleaning Docker resources...$(NC)"
+	@docker stop claude-sdk-server 2>/dev/null || true
+	@docker rm claude-sdk-server 2>/dev/null || true
+	@docker rmi claude-sdk-server:latest 2>/dev/null || true
+	@echo "$(GREEN)Docker resources cleaned$(NC)"
+
+# Docker Compose commands
+docker-compose-up:
+	@echo "$(GREEN)Starting services with Docker Compose...$(NC)"
+	@docker-compose up -d
+	@echo "$(GREEN)Services started$(NC)"
+
+docker-compose-down:
+	@echo "$(YELLOW)Stopping services with Docker Compose...$(NC)"
+	@docker-compose down
+	@echo "$(GREEN)Services stopped$(NC)"
+
+# Docker shortcuts
+.PHONY: db dr ds dl dsh dc
+
+db: docker-build     # Shortcut for docker-build
+dr: docker-run       # Shortcut for docker-run
+ds: docker-stop      # Shortcut for docker-stop
+dl: docker-logs      # Shortcut for docker-logs
+dsh: docker-shell    # Shortcut for docker-shell
+dc: docker-clean     # Shortcut for docker-clean
 	@echo ""
 	@echo "$(GREEN)===========================================$(NC)"
 	@echo "$(GREEN)Claude SDK Server is ready!$(NC)"

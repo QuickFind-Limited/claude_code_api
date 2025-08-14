@@ -24,6 +24,25 @@ make test      # Test the API
 
 ## Installation
 
+### Option 1: Using Docker (Recommended)
+
+```bash
+# Build the Docker image
+docker build -t claude-sdk-server:latest .
+
+# Run with Docker Compose
+docker-compose up -d
+
+# Or run directly with Docker
+docker run -d \
+  --name claude-sdk-server \
+  -p 8000:8000 \
+  -e ANTHROPIC_API_KEY=your_api_key \
+  claude-sdk-server:latest
+```
+
+### Option 2: Local Installation
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -34,6 +53,8 @@ make install
 # or
 uv sync
 ```
+
+**Note**: The Claude Code SDK requires Node.js to be installed. If using Docker, Node.js installation is handled automatically in the container.
 
 ## Usage
 
