@@ -19,7 +19,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./src:/app/src:ro  # Mount source code as read-only for development
-      - ../odoo_mcp:/opt/odoo_mcp:ro  # Mount odoo_mcp folder
+      - ../odoo_mcp:/opt/odoo_mcp  # Mount odoo_mcp folder (writable for venv)
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
