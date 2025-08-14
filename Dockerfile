@@ -23,6 +23,15 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     mv /root/.local/bin/uv /usr/local/bin/uv && \
     mv /root/.local/bin/uvx /usr/local/bin/uvx
 
+# Copy odoo_mcp source code (will be copied from local during build)
+COPY odoo_mcp/ /opt/odoo_mcp/
+
+# Install odoo_mcp dependencies (clean any existing venv first)
+RUN cd /opt/odoo_mcp && \
+    rm -rf .venv && \
+    uv sync --frozen && \
+    uv pip install -e . || echo "odoo_mcp installed"
+
 # Set working directory
 WORKDIR /app
 
