@@ -1,21 +1,7 @@
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.core.logging[0m:[36msetup_logging[0m:[36m45[0m - [1mLogging initialized - Level: INFO[0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.core.logging[0m:[36msetup_logging[0m:[36m46[0m - [1mEnvironment: development[0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.core.logging[0m:[36msetup_logging[0m:[36m47[0m - [1mDebug mode: True[0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.api.middleware.cors[0m:[36msetup_cors[0m:[36m12[0m - [1mSetting up CORS middleware[0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.api.middleware.cors[0m:[36msetup_cors[0m:[36m13[0m - [1mCORS origins: ['http://localhost:3000', 'http://localhost:8080'][0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.api.middleware.cors[0m:[36msetup_cors[0m:[36m23[0m - [1mCORS middleware configured successfully[0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.api.middleware.logging[0m:[36msetup_logging_middleware[0m:[36m91[0m - [1mSetting up logging middleware[0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.api.middleware.logging[0m:[36msetup_logging_middleware[0m:[36m99[0m - [1mLogging middleware configured successfully[0m
-INFO:     Started server process [18403]
+INFO:     Started server process [59168]
 INFO:     Waiting for application startup.
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.main[0m:[36mlifespan[0m:[36m21[0m - [1mStarting Claude SDK Server v0.1.0[0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.main[0m:[36mlifespan[0m:[36m22[0m - [1mEnvironment: development[0m
-[32m2025-08-13 21:19:24[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.main[0m:[36mlifespan[0m:[36m23[0m - [1mDebug mode: True[0m
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-[32m2025-08-14 16:11:41[0m | [1mINFO    [0m | [36msrc.claude_sdk_server.main[0m:[36mlifespan[0m:[36m28[0m - [1mShutting down application[0m
-INFO:     Application shutdown complete.
-INFO:     Finished server process [18403]
-down application
+INFO:     127.0.0.1:58987 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58991 - "POST /api/v1/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59066 - "POST /api/v1/query HTTP/1.1" 200 OK

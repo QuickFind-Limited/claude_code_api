@@ -9,17 +9,23 @@ A minimal FastAPI server providing a REST API interface to Claude Code SDK.
 - ✅ Health check endpoint
 - ✅ Clean, minimal architecture with absolute imports
 - ✅ Makefile for easy management
+- ✅ Docker support with Node.js and Claude Code SDK pre-installed
 
 ## Quick Start
 
 ```bash
-# Install dependencies and start server
+# Install dependencies and start server locally
 make all
 
 # Or step by step:
 make install   # Install dependencies
 make start     # Start server in background
 make test      # Test the API
+```
+
+⚠️ **Note**: The server runs on port 8000. Make sure to stop any Docker containers using this port before running locally:
+```bash
+docker stop claude-sdk-server 2>/dev/null || true
 ```
 
 ## Installation
@@ -268,9 +274,25 @@ This will start the server with auto-reload enabled.
 ## API Documentation
 
 When the server is running, you can access:
+
 - Interactive API docs: http://localhost:8000/docs
 - ReDoc documentation: http://localhost:8000/redoc
 - OpenAPI schema: http://localhost:8000/openapi.json
+
+## Docker vs Local Development
+
+- **Docker**: Best for production-like environment with all dependencies pre-installed (Node.js, Claude Code SDK)
+- **Local**: Best for development with hot-reload and direct access to code
+
+Both options use port 8000 by default. Stop one before starting the other:
+
+```bash
+# Stop Docker before running locally
+make docker-stop
+
+# Stop local server before running Docker
+make stop
+```
 
 ## License
 
