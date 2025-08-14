@@ -23,16 +23,17 @@ class ClaudeService:
             logger.info(f"API key found: ...{api_key[-4:]}")
         
         # Build options based on whether we have a session_id
+        # Use max_turns=10 to allow Claude to use tools and provide final answer
         options = ClaudeCodeOptions(
             resume=request.session_id,
-            max_turns=1
-        ) if request.session_id else ClaudeCodeOptions(max_turns=1)
+            max_turns=10
+        ) if request.session_id else ClaudeCodeOptions(max_turns=10)
         
         logger.info(f"Querying with prompt: {request.prompt[:50]}...")
         
         # Execute query
         message_count = 0
-        last_assistant_message = None
+        all_assistant_messages = []
         
         async for message in query(prompt=request.prompt, options=options):
             message_count += 1
@@ -40,15 +41,16 @@ class ClaudeService:
             logger.info(f"Received message type: {message_type}")
             
             if isinstance(message, ResultMessage):
-                # ResultMessage contains the final result
+                # ResultMessage contains the final result after all turns
                 if message.result:
                     response_text = message.result
-                elif last_assistant_message:
-                    # Use the last assistant message if result is empty
-                    response_text = last_assistant_message
+                elif all_assistant_messages:
+                    # Use the concatenated assistant messages if result is empty
+                    response_text = '\n\n'.join(all_assistant_messages)
                 current_session_id = message.session_id
             elif message_type == "AssistantMessage":
-                # Store assistant messages as they contain Claude's responses
+                # Collect all assistant messages
+                text_content = None
                 if hasattr(message, 'content'):
                     content = message.content
                     # Handle list of content blocks (e.g., tool use blocks)
@@ -59,17 +61,22 @@ class ClaudeService:
                                 text_parts.append(block.text)
                             elif hasattr(block, 'type') and block.type == 'text':
                                 text_parts.append(str(block))
+                            elif isinstance(block, str):
+                                text_parts.append(block)
                         if text_parts:
-                            last_assistant_message = '\n'.join(text_parts)
-                        else:
-                            # If no text blocks, just indicate tool use
-                            last_assistant_message = "Claude is processing your request..."
+                            text_content = '\n'.join(text_parts)
+                    elif isinstance(content, str):
+                        text_content = content
                     else:
-                        last_assistant_message = str(content)
+                        text_content = str(content)
                 elif hasattr(message, 'text'):
-                    last_assistant_message = message.text
+                    text_content = message.text
                 else:
-                    last_assistant_message = str(message)
+                    text_content = str(message)
+                
+                # Only add non-empty text content
+                if text_content and text_content.strip():
+                    all_assistant_messages.append(text_content)
         
         logger.info(f"Total messages received: {message_count}")
         

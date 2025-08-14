@@ -1,20 +1,27 @@
-INFO:     Started server process [83668]
+INFO:     Started server process [93189]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-2025-08-14 16:48:18,503 - src.claude_sdk_server.services.claude_service - WARNING - ANTHROPIC_API_KEY not found in environment
-2025-08-14 16:48:18,503 - src.claude_sdk_server.services.claude_service - INFO - Querying with prompt: How many products do we have?...
-2025-08-14 16:48:21,531 - src.claude_sdk_server.services.claude_service - INFO - Received message type: SystemMessage
-2025-08-14 16:48:25,126 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
-2025-08-14 16:48:26,718 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
-2025-08-14 16:48:26,777 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
-2025-08-14 16:48:26,777 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
-2025-08-14 16:48:26,789 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 5
-INFO:     127.0.0.1:60601 - "POST /api/v1/query HTTP/1.1" 200 OK
-2025-08-14 16:48:33,703 - src.claude_sdk_server.services.claude_service - WARNING - ANTHROPIC_API_KEY not found in environment
-2025-08-14 16:48:33,703 - src.claude_sdk_server.services.claude_service - INFO - Querying with prompt: Say hello and tell me what 2+2 equals...
-2025-08-14 16:48:36,415 - src.claude_sdk_server.services.claude_service - INFO - Received message type: SystemMessage
-2025-08-14 16:48:38,927 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
-2025-08-14 16:48:38,935 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
-2025-08-14 16:48:38,950 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 3
-INFO:     127.0.0.1:60702 - "POST /api/v1/query HTTP/1.1" 200 OK
+2025-08-14 16:50:40,738 - src.claude_sdk_server.services.claude_service - WARNING - ANTHROPIC_API_KEY not found in environment
+2025-08-14 16:50:40,739 - src.claude_sdk_server.services.claude_service - INFO - Querying with prompt: What files are in the current directory?...
+2025-08-14 16:50:43,493 - src.claude_sdk_server.services.claude_service - INFO - Received message type: SystemMessage
+2025-08-14 16:50:46,924 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:50:48,220 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:50:48,259 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:50:56,185 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:50:56,187 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
+2025-08-14 16:50:56,210 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 6
+INFO:     127.0.0.1:61136 - "POST /api/v1/query HTTP/1.1" 200 OK
+2025-08-14 16:51:03,034 - src.claude_sdk_server.services.claude_service - WARNING - ANTHROPIC_API_KEY not found in environment
+2025-08-14 16:51:03,034 - src.claude_sdk_server.services.claude_service - INFO - Querying with prompt: How many products do we have?...
+2025-08-14 16:51:05,772 - src.claude_sdk_server.services.claude_service - INFO - Received message type: SystemMessage
+2025-08-14 16:51:10,135 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:51:11,514 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:51:11,544 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:51:14,938 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:51:16,186 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:51:16,210 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:51:21,130 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:51:21,132 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
+2025-08-14 16:51:21,139 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 9
+INFO:     127.0.0.1:61242 - "POST /api/v1/query HTTP/1.1" 200 OK
