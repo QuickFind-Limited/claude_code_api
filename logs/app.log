@@ -25,3 +25,36 @@ INFO:     127.0.0.1:61136 - "POST /api/v1/query HTTP/1.1" 200 OK
 2025-08-14 16:51:21,132 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
 2025-08-14 16:51:21,139 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 9
 INFO:     127.0.0.1:61242 - "POST /api/v1/query HTTP/1.1" 200 OK
+2025-08-14 16:51:47,791 - src.claude_sdk_server.services.claude_service - WARNING - ANTHROPIC_API_KEY not found in environment
+2025-08-14 16:51:47,791 - src.claude_sdk_server.services.claude_service - INFO - Querying with prompt: How many products do we have on Odoo?...
+2025-08-14 16:51:50,831 - src.claude_sdk_server.services.claude_service - INFO - Received message type: SystemMessage
+2025-08-14 16:52:01,004 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:04,315 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:04,352 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:52:12,084 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:15,153 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:15,178 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:52:26,879 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:26,893 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
+2025-08-14 16:52:26,907 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 9
+INFO:     127.0.0.1:61440 - "POST /api/v1/query HTTP/1.1" 200 OK
+2025-08-14 16:52:45,435 - src.claude_sdk_server.services.claude_service - WARNING - ANTHROPIC_API_KEY not found in environment
+2025-08-14 16:52:45,436 - src.claude_sdk_server.services.claude_service - INFO - Querying with prompt: You've got all permissions! Just give me the numbe...
+2025-08-14 16:52:47,997 - src.claude_sdk_server.services.claude_service - INFO - Received message type: SystemMessage
+2025-08-14 16:52:52,099 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:53,589 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:53,616 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:52:56,676 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:57,940 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:52:57,966 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:53:02,243 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:53:03,561 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:53:03,595 - src.claude_sdk_server.services.claude_service - INFO - Received message type: UserMessage
+2025-08-14 16:53:06,838 - src.claude_sdk_server.services.claude_service - INFO - Received message type: AssistantMessage
+2025-08-14 16:53:06,839 - src.claude_sdk_server.services.claude_service - INFO - Received message type: ResultMessage
+2025-08-14 16:53:06,849 - src.claude_sdk_server.services.claude_service - INFO - Total messages received: 12
+INFO:     127.0.0.1:61573 - "POST /api/v1/query HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [93189]

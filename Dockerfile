@@ -18,7 +18,7 @@ RUN npm install -g @anthropic-ai/claude-code || \
     (curl -fsSL https://claude.ai/install.sh | bash) || \
     echo "Claude Code SDK installation attempted"
 
-# Install uv - Python package manager
+# Install uv - Python package manager (needed for both the app and odoo_mcp)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     mv /root/.local/bin/uv /usr/local/bin/uv && \
     mv /root/.local/bin/uvx /usr/local/bin/uvx
@@ -37,9 +37,13 @@ COPY src/ ./src/
 COPY examples/ ./examples/
 COPY tests/ ./tests/
 COPY Makefile ./
+COPY docker-entrypoint.sh /usr/local/bin/
 
 # Create logs directory
 RUN mkdir -p logs
+
+# Make entrypoint executable
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Set environment variables
 ENV PYTHONPATH="/app:${PYTHONPATH}"
@@ -52,6 +56,9 @@ EXPOSE 8000
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1
+
+# Set entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Default command using uv run
 CMD ["uv", "run", "uvicorn", "src.claude_sdk_server.main:app", "--host", "0.0.0.0", "--port", "8000"]
