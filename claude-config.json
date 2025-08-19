@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "useless-hornet": {
+      "type": "http",
+      "url": "https://useless-hornet.fastmcp.app/mcp"
+    }
+  }
+}

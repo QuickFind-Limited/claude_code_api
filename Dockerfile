@@ -41,6 +41,7 @@ COPY src/ ./src/
 COPY tests/ ./tests/
 COPY Makefile ./
 COPY docker-entrypoint.sh /usr/local/bin/
+COPY claude-config.json /app/
 
 # Create logs directory
 RUN mkdir -p logs
@@ -61,10 +62,6 @@ ENV HOME="/home/app"
 
 # Expose port
 EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/v1/health || exit 1
 
 # Switch to non-root user for runtime
 USER app
