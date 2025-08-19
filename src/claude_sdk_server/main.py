@@ -12,8 +12,6 @@ from fastapi import FastAPI
 
 from src.claude_sdk_server.api.routers.claude_router import router as claude_router
 
-logfire.configure(token=os.environ["LOGFIRE_API_KEY"])
-
 atla_insights.configure(
     token=os.environ["ATLA_INSIGHTS_API_KEY"],
     metadata={"environment": os.environ["ATLA_ENVIRONMENT"]},
@@ -33,6 +31,10 @@ app = FastAPI(
     version="1.0.0",
     description="Minimal REST API server for Claude Code SDK",
 )
+
+
+logfire.configure()
+logfire.instrument_fastapi(app, capture_headers=True)
 
 # Include router
 app.include_router(claude_router)
