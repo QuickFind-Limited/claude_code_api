@@ -13,9 +13,12 @@ configure(
 instrument_claude_code_sdk()
 
 # Configure logging
+import sys
+log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=getattr(logging, log_level, logging.INFO),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout  # Ensure logs go to stdout for Docker
 )
 
 # Create FastAPI application

@@ -37,27 +37,45 @@ class ClaudeService:
         async for message in query(prompt=request.prompt, options=options):
             message_count += 1
             message_type = type(message).__name__
-            logger.info(f"Received message type: {message_type}")
+            logger.info(f"[Message {message_count}] Type: {message_type}")
+            
+            # Log full message details for debugging
+            logger.debug(f"[Message {message_count}] Full content: {str(message)[:500]}...")
             
             if isinstance(message, ResultMessage):
                 # ResultMessage contains the final result after all turns
+                logger.info(f"[FINAL RESULT] Session ID: {message.session_id}")
                 if message.result:
                     response_text = message.result
+                    logger.info(f"[FINAL RESULT] Response length: {len(response_text)} chars")
                 elif all_assistant_messages:
                     # Use the concatenated assistant messages if result is empty
                     response_text = '\n\n'.join(all_assistant_messages)
+                    logger.info(f"[FINAL RESULT] Using concatenated messages: {len(response_text)} chars")
                 current_session_id = message.session_id
+                
             elif message_type == "AssistantMessage":
+                logger.info(f"[ASSISTANT] Processing assistant message")
                 # Collect all assistant messages
                 text_content = None
                 if hasattr(message, 'content'):
                     content = message.content
                     # Handle list of content blocks (e.g., tool use blocks)
                     if isinstance(content, list):
+                        logger.info(f"[ASSISTANT] Content has {len(content)} blocks")
                         text_parts = []
-                        for block in content:
+                        for i, block in enumerate(content):
+                            block_type = getattr(block, 'type', 'unknown')
+                            logger.debug(f"[ASSISTANT] Block {i+1}/{len(content)} - Type: {block_type}")
+                            
+                            # Log tool usage
+                            if hasattr(block, 'name') and hasattr(block, 'input'):
+                                logger.info(f"[TOOL USE] Tool: {block.name}")
+                                logger.debug(f"[TOOL USE] Input: {str(block.input)[:200]}...")
+                            
                             if hasattr(block, 'text'):
                                 text_parts.append(block.text)
+                                logger.debug(f"[ASSISTANT] Text block: {block.text[:100]}...")
                             elif hasattr(block, 'type') and block.type == 'text':
                                 text_parts.append(str(block))
                             elif isinstance(block, str):
@@ -66,16 +84,50 @@ class ClaudeService:
                             text_content = '\n'.join(text_parts)
                     elif isinstance(content, str):
                         text_content = content
+                        logger.debug(f"[ASSISTANT] String content: {content[:200]}...")
                     else:
                         text_content = str(content)
+                        logger.debug(f"[ASSISTANT] Other content type: {type(content)}")
                 elif hasattr(message, 'text'):
                     text_content = message.text
+                    logger.debug(f"[ASSISTANT] Direct text: {text_content[:200]}...")
                 else:
                     text_content = str(message)
+                    logger.debug(f"[ASSISTANT] Stringified message: {text_content[:200]}...")
                 
                 # Only add non-empty text content
                 if text_content and text_content.strip():
                     all_assistant_messages.append(text_content)
+                    logger.info(f"[ASSISTANT] Added message to collection (total: {len(all_assistant_messages)})")
+                    
+            elif message_type == "HumanMessage":
+                logger.info(f"[HUMAN] Human message detected")
+                if hasattr(message, 'content'):
+                    logger.debug(f"[HUMAN] Content: {str(message.content)[:200]}...")
+                    
+            elif message_type == "SystemMessage":
+                logger.info(f"[SYSTEM] System message detected")
+                if hasattr(message, 'content'):
+                    logger.debug(f"[SYSTEM] Content: {str(message.content)[:200]}...")
+                    
+            elif message_type == "ToolMessage":
+                logger.info(f"[TOOL RESULT] Tool message detected")
+                if hasattr(message, 'content'):
+                    logger.debug(f"[TOOL RESULT] Content: {str(message.content)[:200]}...")
+                if hasattr(message, 'tool_use_id'):
+                    logger.debug(f"[TOOL RESULT] Tool use ID: {message.tool_use_id}")
+                    
+            elif message_type == "ThinkingMessage":
+                logger.info(f"[THINKING] Claude is thinking...")
+                if hasattr(message, 'content'):
+                    # Log Claude's reasoning process
+                    thinking_content = str(message.content)
+                    logger.info(f"[THINKING] Reasoning: {thinking_content[:300]}...")
+                    logger.debug(f"[THINKING] Full reasoning: {thinking_content}")
+                    
+            else:
+                logger.info(f"[OTHER] Unknown message type: {message_type}")
+                logger.debug(f"[OTHER] Message attributes: {dir(message)}")
         
         logger.info(f"Total messages received: {message_count}")
         
