@@ -2,6 +2,8 @@
 # Docker-based API server for Claude Code SDK
 
 # Variables
+# Override with: make DOCKER_COMPOSE="docker-compose" up
+DOCKER_COMPOSE := docker compose
 PORT := 8000
 
 # Colors for output
@@ -26,20 +28,20 @@ help:
 # Build and start server
 up:
 	@echo "$(GREEN)Building and starting Claude SDK Server...$(NC)"
-	@docker-compose up --build -d
+	@$(DOCKER_COMPOSE) up --build -d
 	@echo "$(GREEN)Server started at http://localhost:$(PORT)$(NC)"
 	@echo "$(YELLOW)Use 'make logs' to view logs or 'make down' to stop$(NC)"
 
 # Stop server
 down:
 	@echo "$(YELLOW)Stopping server...$(NC)"
-	@docker-compose down
+	@$(DOCKER_COMPOSE) down
 	@echo "$(GREEN)Server stopped$(NC)"
 
 # View logs
 logs:
 	@echo "$(GREEN)Server logs (Ctrl+C to exit):$(NC)"
-	@docker-compose logs -f
+	@$(DOCKER_COMPOSE) logs -f
 
 # Test API endpoints
 test:
@@ -59,7 +61,7 @@ test:
 # Clean everything
 clean:
 	@echo "$(YELLOW)Cleaning up...$(NC)"
-	@docker-compose down -v
+	@$(DOCKER_COMPOSE) down -v
 	@docker rmi claude-sdk-server:latest 2>/dev/null || true
 	@rm -rf __pycache__ .pytest_cache logs/*.log
 	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
