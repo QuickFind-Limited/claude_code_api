@@ -25,7 +25,9 @@ class ClaudeService:
         options = ClaudeCodeOptions(
             resume=request.session_id,
             max_turns=request.max_turns,
-            permission_mode="bypassPermissions"
+            permission_mode="bypassPermissions",
+            # Try to enable thinking mode if available  
+            max_thinking_tokens=32000  # Enable thinking with max tokens
         )
         
         logger.info(f"Querying with prompt: {request.prompt[:50]}...")
@@ -57,18 +59,24 @@ class ClaudeService:
                 for i, block in enumerate(message.content):
                     block_type = type(block).__name__
                     
-                    if block_type == 'TextBlock':
-                        text = block.text
+                    # Debug: Log block attributes to understand structure
+                    logger.debug(f"  Block {i+1} type: {block_type}, attributes: {dir(block)[:10]}...")
+                    
+                    if block_type == 'TextBlock' or hasattr(block, 'text'):
+                        text = getattr(block, 'text', str(block))
                         text_content.append(text)
                         logger.info(f"  Block {i+1}: TEXT - {text[:100]}...")
                         
-                    elif block_type == 'ThinkingBlock':
-                        thinking = block.thinking
-                        logger.info(f"  Block {i+1}: THINKING")
-                        logger.info(f"    Reasoning: {thinking[:200]}...")
+                    elif block_type == 'ThinkingBlock' or hasattr(block, 'thinking'):
+                        thinking = getattr(block, 'thinking', '')
+                        signature = getattr(block, 'signature', '')
+                        logger.info(f"  Block {i+1}: THINKING DETECTED!")
+                        logger.info(f"    Reasoning preview: {thinking[:300]}...")
+                        if signature:
+                            logger.info(f"    Signature: {signature}")
                         logger.debug(f"    Full thinking: {thinking}")
                         
-                    elif block_type == 'ToolUseBlock':
+                    elif block_type == 'ToolUseBlock' or hasattr(block, 'name'):
                         tool_uses.append({
                             'id': block.id,
                             'name': block.name,
@@ -78,15 +86,18 @@ class ClaudeService:
                         logger.info(f"    Tool ID: {block.id}")
                         logger.debug(f"    Input: {str(block.input)[:200]}...")
                         
-                    elif block_type == 'ToolResultBlock':
+                    elif block_type == 'ToolResultBlock' or hasattr(block, 'tool_use_id'):
                         logger.info(f"  Block {i+1}: TOOL RESULT")
-                        logger.info(f"    Tool use ID: {block.tool_use_id}")
-                        logger.info(f"    Is error: {block.is_error}")
-                        if block.content:
-                            content_preview = str(block.content)[:200] if block.content else "None"
+                        logger.info(f"    Tool use ID: {getattr(block, 'tool_use_id', 'unknown')}")
+                        logger.info(f"    Is error: {getattr(block, 'is_error', False)}")
+                        content = getattr(block, 'content', None)
+                        if content:
+                            content_preview = str(content)[:200] if content else "None"
                             logger.debug(f"    Content: {content_preview}...")
                     else:
                         logger.warning(f"  Block {i+1}: Unknown block type: {block_type}")
+                        logger.debug(f"    Block object: {block}")
+                        logger.debug(f"    Block dir: {dir(block)}")
                 
                 # Combine text blocks for response
                 if text_content:
