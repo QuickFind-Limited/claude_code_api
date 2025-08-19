@@ -38,7 +38,6 @@ RUN uv sync --frozen
 
 # Copy application code
 COPY src/ ./src/
-COPY examples/ ./examples/
 COPY tests/ ./tests/
 COPY Makefile ./
 COPY docker-entrypoint.sh /usr/local/bin/

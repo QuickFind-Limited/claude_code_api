@@ -7,7 +7,7 @@ class QueryRequest(BaseModel):
     """Request model for Claude queries."""
     prompt: str = Field(..., min_length=1, description="The prompt to send to Claude")
     session_id: Optional[str] = Field(None, description="Session ID to resume a conversation")
-    max_turns: Optional[int] = Field(None, description="Maximum number of turns to allow Claude to use")
+    max_turns: Optional[int] = Field(30, description="Maximum number of turns to allow Claude to use")
 
 class QueryResponse(BaseModel):
     """Response model for Claude queries."""
