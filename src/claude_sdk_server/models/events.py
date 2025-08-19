@@ -7,7 +7,7 @@ to web clients, WebSocket connections, and API consumers.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -79,7 +79,7 @@ class BaseEvent(BaseModel):
 class QueryStartEvent(BaseEvent):
     """Event fired when a Claude query starts processing."""
 
-    type: EventType = Field(EventType.QUERY_START, const=True)
+    type: Literal[EventType.QUERY_START] = EventType.QUERY_START
     prompt_length: int = Field(
         ..., description="Length of the input prompt in characters"
     )
@@ -96,8 +96,8 @@ class QueryStartEvent(BaseEvent):
 class QueryCompleteEvent(BaseEvent):
     """Event fired when a Claude query completes successfully."""
 
-    type: EventType = Field(EventType.QUERY_COMPLETE, const=True)
-    severity: EventSeverity = Field(EventSeverity.SUCCESS, const=True)
+    type: Literal[EventType.QUERY_COMPLETE] = EventType.QUERY_COMPLETE
+    severity: Literal[EventSeverity.SUCCESS] = EventSeverity.SUCCESS
     duration_ms: Optional[int] = Field(
         None, description="Total processing duration in milliseconds"
     )
@@ -115,8 +115,8 @@ class QueryCompleteEvent(BaseEvent):
 class QueryErrorEvent(BaseEvent):
     """Event fired when a Claude query encounters an error."""
 
-    type: EventType = Field(EventType.QUERY_ERROR, const=True)
-    severity: EventSeverity = Field(EventSeverity.ERROR, const=True)
+    type: Literal[EventType.QUERY_ERROR] = EventType.QUERY_ERROR
+    severity: Literal[EventSeverity.ERROR] = EventSeverity.ERROR
     error_type: str = Field(..., description="Type of error")
     error_details: Optional[str] = Field(None, description="Detailed error information")
     stack_trace: Optional[str] = Field(None, description="Stack trace if available")
@@ -125,7 +125,7 @@ class QueryErrorEvent(BaseEvent):
 class SessionInitEvent(BaseEvent):
     """Event fired when a Claude session is initialized."""
 
-    type: EventType = Field(EventType.SESSION_INIT, const=True)
+    type: Literal[EventType.SESSION_INIT] = EventType.SESSION_INIT
     tools_available: int = Field(0, description="Number of tools available")
     tool_names: List[str] = Field(
         default_factory=list, description="Names of available tools"
@@ -139,14 +139,14 @@ class SessionInitEvent(BaseEvent):
 class ThinkingStartEvent(BaseEvent):
     """Event fired when Claude starts thinking/reasoning."""
 
-    type: EventType = Field(EventType.THINKING_START, const=True)
+    type: Literal[EventType.THINKING_START] = EventType.THINKING_START
     signature: Optional[str] = Field(None, description="Thinking block signature")
 
 
 class ThinkingInsightEvent(BaseEvent):
     """Event fired for insights extracted from thinking blocks."""
 
-    type: EventType = Field(EventType.THINKING_INSIGHT, const=True)
+    type: Literal[EventType.THINKING_INSIGHT] = EventType.THINKING_INSIGHT
     insight_type: str = Field(
         ..., description="Type of insight: todo, insight, or decision"
     )
@@ -157,7 +157,7 @@ class ThinkingInsightEvent(BaseEvent):
 class ToolUseEvent(BaseEvent):
     """Event fired when Claude uses a tool."""
 
-    type: EventType = Field(EventType.TOOL_USE, const=True)
+    type: Literal[EventType.TOOL_USE] = EventType.TOOL_USE
     tool_name: str = Field(..., description="Name of the tool being used")
     tool_id: str = Field(..., description="Unique ID for this tool use")
     input_summary: str = Field(..., description="Formatted summary of tool input")
@@ -167,7 +167,7 @@ class ToolUseEvent(BaseEvent):
 class ToolResultEvent(BaseEvent):
     """Event fired when a tool returns a result."""
 
-    type: EventType = Field(EventType.TOOL_RESULT, const=True)
+    type: Literal[EventType.TOOL_RESULT] = EventType.TOOL_RESULT
     tool_id: str = Field(..., description="ID of the tool that produced this result")
     tool_name: str = Field(..., description="Name of the tool")
     success: bool = Field(..., description="Whether the tool executed successfully")
@@ -180,8 +180,8 @@ class ToolResultEvent(BaseEvent):
 class ToolErrorEvent(BaseEvent):
     """Event fired when a tool encounters an error."""
 
-    type: EventType = Field(EventType.TOOL_ERROR, const=True)
-    severity: EventSeverity = Field(EventSeverity.ERROR, const=True)
+    type: Literal[EventType.TOOL_ERROR] = EventType.TOOL_ERROR
+    severity: Literal[EventSeverity.ERROR] = EventSeverity.ERROR
     tool_id: str = Field(..., description="ID of the tool that failed")
     tool_name: str = Field(..., description="Name of the tool")
     error_message: str = Field(..., description="Error message")
@@ -190,7 +190,7 @@ class ToolErrorEvent(BaseEvent):
 class TodoIdentifiedEvent(BaseEvent):
     """Event fired when a TODO/action item is identified."""
 
-    type: EventType = Field(EventType.TODO_IDENTIFIED, const=True)
+    type: Literal[EventType.TODO_IDENTIFIED] = EventType.TODO_IDENTIFIED
     todo_content: str = Field(..., description="The TODO content")
     priority: int = Field(1, description="Priority level (1-5)")
     sequence_number: int = Field(..., description="Sequence number of this TODO")
@@ -199,7 +199,7 @@ class TodoIdentifiedEvent(BaseEvent):
 class DecisionMadeEvent(BaseEvent):
     """Event fired when Claude makes a key decision."""
 
-    type: EventType = Field(EventType.DECISION_MADE, const=True)
+    type: Literal[EventType.DECISION_MADE] = EventType.DECISION_MADE
     decision_content: str = Field(..., description="The decision content")
     confidence: Optional[float] = Field(None, description="Confidence level (0.0-1.0)")
 
@@ -207,7 +207,7 @@ class DecisionMadeEvent(BaseEvent):
 class StepProgressEvent(BaseEvent):
     """Event fired to indicate progress through processing steps."""
 
-    type: EventType = Field(EventType.STEP_PROGRESS, const=True)
+    type: Literal[EventType.STEP_PROGRESS] = EventType.STEP_PROGRESS
     step_number: int = Field(..., description="Current step number")
     total_steps: Optional[int] = Field(None, description="Total expected steps")
     step_description: str = Field(..., description="Description of current step")
@@ -219,7 +219,7 @@ class StepProgressEvent(BaseEvent):
 class SystemMessageEvent(BaseEvent):
     """Event fired for system messages."""
 
-    type: EventType = Field(EventType.SYSTEM_MESSAGE, const=True)
+    type: Literal[EventType.SYSTEM_MESSAGE] = EventType.SYSTEM_MESSAGE
     subtype: str = Field(..., description="System message subtype")
     system_data: Optional[Dict[str, Any]] = Field(
         None, description="System message data"
@@ -229,7 +229,7 @@ class SystemMessageEvent(BaseEvent):
 class AssistantMessageEvent(BaseEvent):
     """Event fired for assistant messages."""
 
-    type: EventType = Field(EventType.ASSISTANT_MESSAGE, const=True)
+    type: Literal[EventType.ASSISTANT_MESSAGE] = EventType.ASSISTANT_MESSAGE
     content_length: int = Field(..., description="Length of assistant content")
     block_count: int = Field(..., description="Number of content blocks")
     has_text: bool = Field(False, description="Whether message contains text")
@@ -240,7 +240,7 @@ class AssistantMessageEvent(BaseEvent):
 class PerformanceMetricEvent(BaseEvent):
     """Event fired for performance metrics."""
 
-    type: EventType = Field(EventType.PERFORMANCE_METRIC, const=True)
+    type: Literal[EventType.PERFORMANCE_METRIC] = EventType.PERFORMANCE_METRIC
     operation: str = Field(..., description="Name of the operation measured")
     duration: float = Field(..., description="Duration in seconds")
     metric_type: str = Field("duration", description="Type of metric")
@@ -250,7 +250,7 @@ class PerformanceMetricEvent(BaseEvent):
 class TokenUsageEvent(BaseEvent):
     """Event fired for token usage information."""
 
-    type: EventType = Field(EventType.TOKEN_USAGE, const=True)
+    type: Literal[EventType.TOKEN_USAGE] = EventType.TOKEN_USAGE
     input_tokens: int = Field(..., description="Number of input tokens")
     output_tokens: int = Field(..., description="Number of output tokens")
     total_tokens: int = Field(..., description="Total tokens used")
