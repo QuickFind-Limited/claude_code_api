@@ -1,15 +1,19 @@
 """Minimal Claude API router."""
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
+
 from src.claude_sdk_server.models.dto import QueryRequest, QueryResponse
-from src.claude_sdk_server.services.claude_service import get_claude_service, ClaudeService
+from src.claude_sdk_server.services.claude_service import (
+    ClaudeService,
+    get_claude_service,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["claude"])
 
+
 @router.post("/query")
 async def query_claude(
-    request: QueryRequest,
-    service: ClaudeService = Depends(get_claude_service)
+    request: QueryRequest, service: ClaudeService = Depends(get_claude_service)
 ) -> QueryResponse:
     """Send a query to Claude Code."""
     try:
@@ -17,6 +21,7 @@ async def query_claude(
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/health")
 async def health_check():

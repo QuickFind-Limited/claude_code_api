@@ -1,15 +1,31 @@
 """Minimal Data Transfer Objects for Claude SDK Server."""
 
 from typing import Optional
+
 from pydantic import BaseModel, Field
+
 
 class QueryRequest(BaseModel):
     """Request model for Claude queries."""
+
     prompt: str = Field(..., min_length=1, description="The prompt to send to Claude")
-    session_id: Optional[str] = Field(None, description="Session ID to resume a conversation")
-    max_turns: Optional[int] = Field(30, description="Maximum number of turns to allow Claude to use")
+    session_id: Optional[str] = Field(
+        None, description="Session ID to resume a conversation"
+    )
+    max_turns: Optional[int] = Field(
+        30, description="Maximum number of turns to allow Claude to use"
+    )
+    model: Optional[str] = Field(
+        "claude-sonnet-4-20250514",
+        description="The model to use for Claude: claude-opus-4-1-20250805 or claude-sonnet-4-20250514",
+    )
+    max_thinking_tokens: Optional[int] = Field(
+        32000, description="Maximum number of tokens to allow Claude to think"
+    )
+
 
 class QueryResponse(BaseModel):
     """Response model for Claude queries."""
+
     response: str = Field(..., description="Claude's response")
     session_id: str = Field(..., description="Session ID for future use")

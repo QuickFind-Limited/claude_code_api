@@ -13,6 +13,7 @@ dependencies = [
     "pydantic>=2.10.5",
     "claude-code-sdk>=0.0.20",
     "atla-insights[claude-code-sdk]>=0.0.20",
+    "logfire[fastapi]>=4.3.3",
 ]
 
 [build-system]
@@ -21,3 +22,18 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/claude_sdk_server"]
+
+[tool.ruff]
+include = ["*.py", "*.pyi", "**/pyproject.toml"]
+
+[tool.ruff.lint]
+# Enable the isort rules.
+extend-select = ["I"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+]
