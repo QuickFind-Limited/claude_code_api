@@ -12,12 +12,6 @@ services:
     # Use .env file for environment variables
     env_file:
       - .env
-    # environment:
-      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      # - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    # volumes:
-      # - ./logs:/app/logs
-      # - ./src:/app/src:ro  # Mount source code as read-only for development
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
