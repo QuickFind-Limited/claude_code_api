@@ -9,17 +9,15 @@ services:
     container_name: claude-sdk-server
     ports:
       - "${PORT:-8000}:8000"
-    environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - ODOO_URL=${ODOO_URL}
-      - ODOO_DB=${ODOO_DB}
-      - ODOO_USERNAME=${ODOO_USERNAME}
-      - ODOO_API_KEY=${ODOO_API_KEY}
-    volumes:
-      - ./logs:/app/logs
-      - ./src:/app/src:ro  # Mount source code as read-only for development
-      - ../odoo_mcp:/opt/odoo_mcp  # Mount odoo_mcp folder (writable for venv)
+    # Use .env file for environment variables
+    env_file:
+      - .env
+    # environment:
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    # volumes:
+      # - ./logs:/app/logs
+      # - ./src:/app/src:ro  # Mount source code as read-only for development
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]

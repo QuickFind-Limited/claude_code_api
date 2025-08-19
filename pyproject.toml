@@ -12,6 +12,7 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
     "pydantic>=2.10.5",
     "claude-code-sdk>=0.0.20",
+    "atla-insights[claude-code-sdk]>=0.0.20",
 ]
 
 [build-system]

@@ -9,9 +9,9 @@ services:
     container_name: claude-sdk-server-dev
     ports:
       - "8000:8000"
-    environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-    volumes:
-      - ./src:/app/src
-      - ./logs:/app/logs
+    # environment:
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    # volumes:
+      # - ./src:/app/src
+      # - ./logs:/app/logs
     command: ["uv", "run", "uvicorn", "src.claude_sdk_server.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

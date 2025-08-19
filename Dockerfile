@@ -23,6 +23,10 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     mv /root/.local/bin/uv /usr/local/bin/uv && \
     mv /root/.local/bin/uvx /usr/local/bin/uvx
 
+# Create non-root user and group
+RUN groupadd -g 1001 app && \
+    useradd -m -u 1001 -g app -s /bin/bash app
+
 # Set working directory
 WORKDIR /app
 
@@ -45,10 +49,16 @@ RUN mkdir -p logs
 # Make entrypoint executable
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Ensure non-root user owns application files and writable dirs
+RUN chown -R app:app /app && \
+    mkdir -p /home/app/.config && \
+    chown -R app:app /home/app/.config
+
 # Set environment variables
 ENV PYTHONPATH="/app:${PYTHONPATH}"
 ENV PYTHONUNBUFFERED=1
 ENV NODE_PATH="/usr/lib/node_modules"
+ENV HOME="/home/app"
 
 # Expose port
 EXPOSE 8000
@@ -56,6 +66,9 @@ EXPOSE 8000
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1
+
+# Switch to non-root user for runtime
+USER app
 
 # Set entrypoint
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

@@ -1,8 +1,16 @@
 """Minimal Claude SDK Server."""
 
 import logging
+import os
 from fastapi import FastAPI
 from src.claude_sdk_server.api.routers.claude_router import router as claude_router
+from atla_insights import configure, instrument_claude_code_sdk
+
+configure(
+    token=os.environ["ATLA_INSIGHTS_API_KEY"],
+    metadata={"environment": os.environ["ATLA_ENVIRONMENT"]}
+)
+instrument_claude_code_sdk()
 
 # Configure logging
 logging.basicConfig(

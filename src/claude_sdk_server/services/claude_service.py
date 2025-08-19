@@ -22,12 +22,11 @@ class ClaudeService:
         else:
             logger.info(f"API key found: ...{api_key[-4:]}")
         
-        # Build options based on whether we have a session_id
-        # Use max_turns=10 to allow Claude to use tools and provide final answer
         options = ClaudeCodeOptions(
             resume=request.session_id,
-            max_turns=10
-        ) if request.session_id else ClaudeCodeOptions(max_turns=10)
+            max_turns=request.max_turns,
+            permission_mode="bypassPermissions"
+        )
         
         logger.info(f"Querying with prompt: {request.prompt[:50]}...")
         
