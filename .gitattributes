@@ -1,0 +1,9 @@
+# Ensure shell scripts always have LF line endings (required for Docker)
+*.sh text eol=lf
+docker-entrypoint.sh text eol=lf
+
+# Ensure Dockerfile has LF line endings
+Dockerfile text eol=lf
+
+# Auto detect text files and perform LF normalization
+* text=auto
