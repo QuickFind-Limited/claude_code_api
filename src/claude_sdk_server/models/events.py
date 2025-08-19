@@ -75,6 +75,14 @@ class BaseEvent(BaseModel):
             datetime: lambda v: v.isoformat(),
         }
 
+    def dict(self, **kwargs):
+        """Override dict method to handle datetime serialization."""
+        data = super().dict(**kwargs)
+        # Convert datetime to ISO format string
+        if "timestamp" in data and isinstance(data["timestamp"], datetime):
+            data["timestamp"] = data["timestamp"].isoformat()
+        return data
+
 
 class QueryStartEvent(BaseEvent):
     """Event fired when a Claude query starts processing."""
