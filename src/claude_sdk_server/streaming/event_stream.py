@@ -211,12 +211,17 @@ class EventStreamManager:
 
         # Start background cleanup task
         self._cleanup_task = None
-        self._start_cleanup_task()
+        # Will be started when first client connects
 
     def _start_cleanup_task(self):
         """Start background task for cleaning up inactive clients."""
         if self._cleanup_task is None:
-            self._cleanup_task = asyncio.create_task(self._cleanup_inactive_clients())
+            try:
+                loop = asyncio.get_running_loop()
+                self._cleanup_task = loop.create_task(self._cleanup_inactive_clients())
+            except RuntimeError:
+                # No running loop yet, will be started later
+                pass
 
     async def _cleanup_inactive_clients(self):
         """Background task to clean up inactive clients."""
@@ -289,6 +294,9 @@ class EventStreamManager:
         self, subscription: EventSubscription, connection_type: str = "sse"
     ) -> ClientConnection:
         """Connect a new client with subscription parameters."""
+        # Start cleanup task if not already running
+        self._start_cleanup_task()
+
         client = ClientConnection(
             client_id=subscription.client_id,
             subscription=subscription,
