@@ -378,7 +378,7 @@ class EventStreamManager:
             event_json = json.dumps(event_data)
 
             sse_data = f"id: {event.id}\n"
-            sse_data += f"event: {event.type}\n"
+            sse_data += f"event: {event.type.value if hasattr(event.type, 'value') else event.type}\n"
             sse_data += f"data: {event_json}\n\n"
 
             yield sse_data
