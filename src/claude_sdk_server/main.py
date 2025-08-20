@@ -6,6 +6,7 @@ import atla_insights
 import logfire
 from atla_insights import instrument_claude_code_sdk
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.claude_sdk_server.api.routers.claude_router import router as claude_router
 from src.claude_sdk_server.api.routers.streaming_router import (
@@ -31,12 +32,26 @@ app = FastAPI(
     description="Minimal REST API server for Claude Code SDK",
 )
 
+# Configure CORS for frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "*",
+    ],  # Allow frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
+
 logger.context(
-    "FastAPI application created",
+    "FastAPI application created with CORS enabled",
     context_data={
         "title": "Claude SDK Server",
         "version": "1.0.0",
         "environment": os.environ.get("ATLA_ENVIRONMENT", "development"),
+        "cors_enabled": True,
     },
 )
 

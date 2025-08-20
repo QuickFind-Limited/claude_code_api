@@ -36,6 +36,11 @@ help:
 	@echo "  make query       - Send a test query to Claude"
 	@echo "  make stream-status - Check streaming system status"
 	@echo "  make stream-clients - List active streaming clients"
+	@echo ""
+	@echo "$(YELLOW)Frontend Commands:$(NC)"
+	@echo "  make frontend    - Start the frontend dashboard"
+	@echo "  make open-frontend - Open dashboard in browser"
+	@echo "  make start-all   - Start backend and frontend together"
 
 # Build and start server
 up:
@@ -142,6 +147,27 @@ stream-status:
 stream-clients:
 	@echo "$(YELLOW)Active Streaming Clients:$(NC)"
 	@curl -s http://localhost:$(PORT)/api/v1/stream/clients | python3 -m json.tool
+
+# ============================================================================
+# FRONTEND COMMANDS
+# ============================================================================
+
+# Start the frontend dashboard
+frontend:
+	@echo "$(GREEN)Starting frontend dashboard...$(NC)"
+	@cd frontend && python3 serve.py
+
+# Open frontend in browser
+open-frontend:
+	@echo "$(GREEN)Opening frontend dashboard...$(NC)"
+	@open http://localhost:3000 || xdg-open http://localhost:3000 || echo "Please open http://localhost:3000 in your browser"
+
+# Start both backend and frontend
+start-all: up
+	@echo "$(GREEN)Starting frontend dashboard...$(NC)"
+	@cd frontend && python3 serve.py &
+	@sleep 2
+	@open http://localhost:3000 || xdg-open http://localhost:3000 || echo "Please open http://localhost:3000 in your browser"
 
 # ============================================================================
 # DEVELOPMENT COMMANDS

@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude SDK Server - Live Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+
+        /* Query Form */
+        .query-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .query-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .query-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .status-card {
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .connection-status.connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .connection-status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Event Stream */
+        .event-stream {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .event-stream::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .event-stream::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 100px;
+        }
+
+        .event-stream::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 100px;
+        }
+
+        .event-stream::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        .event-item {
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid #e5e7eb;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .event-item.query_start { border-left-color: #667eea; }
+        .event-item.query_complete { border-left-color: #10b981; }
+        .event-item.thinking_insight { border-left-color: #f59e0b; }
+        .event-item.tool_use { border-left-color: #8b5cf6; }
+        .event-item.tool_result { border-left-color: #3b82f6; }
+        .event-item.query_error { border-left-color: #ef4444; }
+        .event-item.performance_metric { border-left-color: #06b6d4; }
+        .event-item.token_usage { border-left-color: #ec4899; }
+
+        .event-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .event-emoji {
+            font-size: 24px;
+        }
+
+        .event-type {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .event-time {
+            margin-left: auto;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .event-message {
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .event-data {
+            font-size: 12px;
+            color: #6b7280;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Response Display */
+        .response-box {
+            padding: 20px;
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .response-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #14532d;
+            margin-bottom: 12px;
+        }
+
+        .response-text {
+            color: #166534;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .session-id {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #15803d;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+        }
+
+        /* Filter Pills */
+        .filter-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .filter-pill {
+            padding: 6px 12px;
+            background: #f3f4f6;
+            border: 2px solid transparent;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4b5563;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill:hover {
+            background: #e5e7eb;
+        }
+
+        .filter-pill.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Metrics Display */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .metric-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .metric-unit {
+            font-size: 12px;
+            color: #6b7280;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Claude SDK Server - Live Dashboard</h1>
+            <p class="subtitle">Real-time monitoring of Claude queries, events, and performance metrics</p>
+        </header>
+
+        <div class="dashboard">
+            <!-- Left Panel: Controls & Status -->
+            <div class="panel">
+                <h2 class="panel-title">🎮 Control Center</h2>
+                
+                <!-- Query Form -->
+                <div class="query-form">
+                    <input 
+                        type="text" 
+                        id="queryInput" 
+                        class="query-input" 
+                        placeholder="Ask Claude anything..."
+                        value="Create a simple TODO list for learning Python"
+                    >
+                    <button id="sendBtn" class="btn" onclick="sendQuery()">
+                        Send Query
+                    </button>
+                </div>
+
+                <!-- Connection Status -->
+                <div style="margin-bottom: 20px;">
+                    <div id="connectionStatus" class="connection-status disconnected">
+                        <span class="status-dot"></span>
+                        <span>Disconnected</span>
+                    </div>
+                </div>
+
+                <!-- Status Cards -->
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-label">Active Connections</div>
+                        <div class="status-value" id="activeConnections">0</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-label">Events Received</div>
+                        <div class="status-value" id="eventsReceived">0</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-label">Events Queued</div>
+                        <div class="status-value" id="eventsQueued">0</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-label">Uptime</div>
+                        <div class="status-value" id="uptime">0s</div>
+                    </div>
+                </div>
+
+                <!-- Event Filters -->
+                <h3 class="panel-title" style="margin-top: 24px;">🔍 Event Filters</h3>
+                <div class="filter-pills">
+                    <div class="filter-pill active" data-type="all" onclick="toggleFilter(this)">All Events</div>
+                    <div class="filter-pill" data-type="query_start" onclick="toggleFilter(this)">🚀 Query Start</div>
+                    <div class="filter-pill" data-type="thinking_insight" onclick="toggleFilter(this)">💡 Thinking</div>
+                    <div class="filter-pill" data-type="tool_use" onclick="toggleFilter(this)">🛠️ Tools</div>
+                    <div class="filter-pill" data-type="performance_metric" onclick="toggleFilter(this)">⚡ Performance</div>
+                    <div class="filter-pill" data-type="token_usage" onclick="toggleFilter(this)">📊 Tokens</div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="btn btn-secondary" onclick="clearEvents()">Clear Events</button>
+                    <button class="btn btn-secondary" onclick="toggleConnection()">
+                        <span id="toggleText">Connect</span>
+                    </button>
+                </div>
+
+                <!-- Performance Metrics -->
+                <h3 class="panel-title" style="margin-top: 24px;">📊 Performance Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">Last Query Time</div>
+                        <div class="metric-value">
+                            <span id="lastQueryTime">--</span>
+                            <span class="metric-unit">s</span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Total Tokens</div>
+                        <div class="metric-value">
+                            <span id="totalTokens">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Input Tokens</div>
+                        <div class="metric-value">
+                            <span id="inputTokens">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Output Tokens</div>
+                        <div class="metric-value">
+                            <span id="outputTokens">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Event Stream -->
+            <div class="panel">
+                <h2 class="panel-title">📡 Live Event Stream</h2>
+                
+                <!-- Response Display -->
+                <div id="responseContainer" style="display: none;">
+                    <div class="response-box">
+                        <div class="response-header">✅ Claude's Response:</div>
+                        <div class="response-text" id="responseText"></div>
+                        <div class="session-id">Session: <span id="sessionId"></span></div>
+                    </div>
+                </div>
+
+                <!-- Event Stream -->
+                <div class="event-stream" id="eventStream">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-text">No events yet. Send a query to see events stream in real-time!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = 'http://localhost:8000/api/v1';
+        let eventSource = null;
+        let isConnected = false;
+        let eventCount = 0;
+        let activeFilters = new Set(['all']);
+        let currentSessionId = null;
+
+        // Event type to emoji mapping
+        const eventEmojis = {
+            'query_start': '🚀',
+            'query_complete': '✅',
+            'query_error': '❌',
+            'session_init': '🔧',
+            'thinking_start': '🤔',
+            'thinking_insight': '💡',
+            'tool_use': '🛠️',
+            'tool_result': '📦',
+            'tool_error': '⚠️',
+            'todo_identified': '📝',
+            'decision_made': '🎯',
+            'step_progress': '📈',
+            'system_message': 'ℹ️',
+            'assistant_message': '🤖',
+            'performance_metric': '⚡',
+            'token_usage': '📊'
+        };
+
+        // Initialize on page load
+        window.onload = () => {
+            connectToStream();
+            updateStatus();
+            setInterval(updateStatus, 5000); // Update status every 5 seconds
+        };
+
+        // Connect to SSE stream
+        function connectToStream() {
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            const params = new URLSearchParams({
+                include_performance: 'true',
+                include_system: 'false'
+            });
+
+            eventSource = new EventSource(`${API_BASE}/stream/sse?${params}`);
+
+            eventSource.onopen = () => {
+                isConnected = true;
+                updateConnectionStatus(true);
+                console.log('Connected to event stream');
+            };
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleEvent(data);
+                } catch (error) {
+                    console.error('Failed to parse event:', error);
+                }
+            };
+
+            eventSource.onerror = (error) => {
+                console.error('SSE error:', error);
+                isConnected = false;
+                updateConnectionStatus(false);
+            };
+
+            // Listen for specific event types
+            Object.keys(eventEmojis).forEach(eventType => {
+                eventSource.addEventListener(eventType, (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleEvent(data);
+                    } catch (error) {
+                        console.error('Failed to parse typed event:', error);
+                    }
+                });
+            });
+        }
+
+        // Handle incoming events
+        function handleEvent(event) {
+            eventCount++;
+            document.getElementById('eventsReceived').textContent = eventCount;
+
+            // Update session ID if present
+            if (event.session_id) {
+                currentSessionId = event.session_id;
+            }
+
+            // Update metrics for specific event types
+            if (event.type === 'performance_metric' && event.operation === 'claude_query') {
+                document.getElementById('lastQueryTime').textContent = event.duration.toFixed(2);
+            }
+
+            if (event.type === 'token_usage') {
+                document.getElementById('totalTokens').textContent = event.total_tokens || '--';
+                document.getElementById('inputTokens').textContent = event.input_tokens || '--';
+                document.getElementById('outputTokens').textContent = event.output_tokens || '--';
+            }
+
+            // Check if event should be displayed based on filters
+            if (!shouldDisplayEvent(event.type)) {
+                return;
+            }
+
+            // Add event to stream
+            addEventToStream(event);
+        }
+
+        // Check if event should be displayed based on active filters
+        function shouldDisplayEvent(eventType) {
+            if (activeFilters.has('all')) return true;
+            return activeFilters.has(eventType);
+        }
+
+        // Add event to the stream display
+        function addEventToStream(event) {
+            const stream = document.getElementById('eventStream');
+            
+            // Remove empty state if present
+            const emptyState = stream.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const eventItem = document.createElement('div');
+            eventItem.className = `event-item ${event.type}`;
+            
+            const emoji = eventEmojis[event.type] || '📌';
+            const timestamp = new Date(event.timestamp).toLocaleTimeString();
+            
+            let eventDataHtml = '';
+            if (event.data && Object.keys(event.data).length > 0) {
+                eventDataHtml = `<div class="event-data">${JSON.stringify(event.data, null, 2)}</div>`;
+            }
+
+            // Special handling for specific event types
+            let additionalInfo = '';
+            if (event.type === 'tool_use') {
+                additionalInfo = event.input_summary ? `<div class="event-data">Input: ${event.input_summary}</div>` : '';
+            } else if (event.type === 'tool_result') {
+                additionalInfo = event.result_summary ? `<div class="event-data">Result: ${event.result_summary}</div>` : '';
+            } else if (event.type === 'thinking_insight') {
+                additionalInfo = event.content ? `<div class="event-data">💭 ${event.content}</div>` : '';
+            }
+
+            eventItem.innerHTML = `
+                <div class="event-header">
+                    <span class="event-emoji">${emoji}</span>
+                    <span class="event-type">${event.type.replace(/_/g, ' ').toUpperCase()}</span>
+                    <span class="event-time">${timestamp}</span>
+                </div>
+                <div class="event-message">${event.message}</div>
+                ${additionalInfo}
+                ${eventDataHtml}
+            `;
+
+            // Insert at the beginning of the stream
+            stream.insertBefore(eventItem, stream.firstChild);
+
+            // Limit the number of displayed events
+            const maxEvents = 50;
+            while (stream.children.length > maxEvents) {
+                stream.removeChild(stream.lastChild);
+            }
+        }
+
+        // Send query to Claude
+        async function sendQuery() {
+            const input = document.getElementById('queryInput');
+            const btn = document.getElementById('sendBtn');
+            const prompt = input.value.trim();
+
+            if (!prompt) {
+                alert('Please enter a query');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Processing...';
+
+            try {
+                const response = await fetch(`${API_BASE}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        session_id: currentSessionId,
+                        max_thinking_tokens: 5000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Display response
+                displayResponse(data);
+                
+                // Update session ID
+                currentSessionId = data.session_id;
+                
+                // Clear input
+                input.value = '';
+            } catch (error) {
+                console.error('Query failed:', error);
+                alert('Failed to send query: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Send Query';
+            }
+        }
+
+        // Display Claude's response
+        function displayResponse(data) {
+            const container = document.getElementById('responseContainer');
+            const responseText = document.getElementById('responseText');
+            const sessionId = document.getElementById('sessionId');
+
+            responseText.textContent = data.response;
+            sessionId.textContent = data.session_id;
+            container.style.display = 'block';
+        }
+
+        // Update server status
+        async function updateStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/stream/status`);
+                const data = await response.json();
+
+                document.getElementById('activeConnections').textContent = data.active_connections;
+                document.getElementById('eventsQueued').textContent = data.events_queued;
+                
+                // Format uptime
+                const uptime = Math.floor(data.uptime_seconds);
+                const hours = Math.floor(uptime / 3600);
+                const minutes = Math.floor((uptime % 3600) / 60);
+                const seconds = uptime % 60;
+                
+                let uptimeText = '';
+                if (hours > 0) uptimeText += `${hours}h `;
+                if (minutes > 0) uptimeText += `${minutes}m `;
+                uptimeText += `${seconds}s`;
+                
+                document.getElementById('uptime').textContent = uptimeText;
+            } catch (error) {
+                console.error('Failed to update status:', error);
+            }
+        }
+
+        // Update connection status display
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            const toggleBtn = document.getElementById('toggleText');
+            
+            if (connected) {
+                status.className = 'connection-status connected';
+                status.innerHTML = '<span class="status-dot"></span><span>Connected</span>';
+                toggleBtn.textContent = 'Disconnect';
+            } else {
+                status.className = 'connection-status disconnected';
+                status.innerHTML = '<span class="status-dot"></span><span>Disconnected</span>';
+                toggleBtn.textContent = 'Connect';
+            }
+        }
+
+        // Toggle connection
+        function toggleConnection() {
+            if (isConnected) {
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                isConnected = false;
+                updateConnectionStatus(false);
+            } else {
+                connectToStream();
+            }
+        }
+
+        // Toggle event filter
+        function toggleFilter(element) {
+            const filterType = element.dataset.type;
+            
+            if (filterType === 'all') {
+                // Clear all other filters and activate 'all'
+                document.querySelectorAll('.filter-pill').forEach(pill => {
+                    pill.classList.remove('active');
+                });
+                element.classList.add('active');
+                activeFilters.clear();
+                activeFilters.add('all');
+            } else {
+                // Toggle specific filter
+                if (element.classList.contains('active')) {
+                    element.classList.remove('active');
+                    activeFilters.delete(filterType);
+                } else {
+                    element.classList.add('active');
+                    activeFilters.add(filterType);
+                    // Remove 'all' filter if specific filter is selected
+                    document.querySelector('[data-type="all"]').classList.remove('active');
+                    activeFilters.delete('all');
+                }
+                
+                // If no filters are active, activate 'all'
+                if (activeFilters.size === 0) {
+                    document.querySelector('[data-type="all"]').classList.add('active');
+                    activeFilters.add('all');
+                }
+            }
+        }
+
+        // Clear events
+        function clearEvents() {
+            const stream = document.getElementById('eventStream');
+            stream.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">No events yet. Send a query to see events stream in real-time!</div>
+                </div>
+            `;
+            eventCount = 0;
+            document.getElementById('eventsReceived').textContent = '0';
+        }
+
+        // Handle Enter key in input
+        document.getElementById('queryInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendQuery();
+            }
+        });
+    </script>
+</body>
+</html>
