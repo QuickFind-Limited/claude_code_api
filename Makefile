@@ -162,6 +162,14 @@ open-frontend:
 	@echo "$(GREEN)Opening frontend dashboard...$(NC)"
 	@open http://localhost:3000 || xdg-open http://localhost:3000 || echo "Please open http://localhost:3000 in your browser"
 
+# Start the chatbot interface
+chatbot:
+	@echo "$(GREEN)💬 Starting chatbot interface...$(NC)"
+	@cd frontend && python3 -m http.server 3001 --bind 0.0.0.0 > /dev/null 2>&1 &
+	@sleep 1
+	@echo "$(GREEN)✅ Chatbot available at http://localhost:3001/chatbot.html$(NC)"
+	@open http://localhost:3001/chatbot.html || xdg-open http://localhost:3001/chatbot.html || echo "Please open http://localhost:3001/chatbot.html in your browser"
+
 # Start both backend and frontend
 start-all: up
 	@echo "$(GREEN)Starting frontend dashboard...$(NC)"
