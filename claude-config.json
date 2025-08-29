@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "useless-hornet": {
+    "netsuite_mcp": {
       "type": "http",
-      "url": "https://useless-hornet.fastmcp.app/mcp"
+      "url": "https://source-netsuite.fastmcp.app/mcp"
     }
   }
 }

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SSE Streaming Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+        }
+        #events {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .event {
+            margin: 5px 0;
+            padding: 8px;
+            background: #3d3d3d;
+            border-left: 3px solid #58a6ff;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateX(-20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
+        }
+        .timestamp {
+            color: #888;
+            font-size: 0.9em;
+        }
+        button {
+            background: #58a6ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #4090ff;
+        }
+        #status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #2d2d2d;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>SSE Streaming Test</h1>
+    <div id="status">Status: Not connected</div>
+    <button onclick="startTest()">Start Streaming Test</button>
+    <button onclick="stopTest()">Stop</button>
+    <h2>Events (Real-time):</h2>
+    <div id="events"></div>
+
+    <script>
+        let eventSource = null;
+        let eventCount = 0;
+        let startTime = null;
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = `Status: ${message}`;
+        }
+
+        function addEvent(type, data) {
+            const eventsDiv = document.getElementById('events');
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'event';
+            
+            const timestamp = new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+            
+            const elapsed = startTime ? ((Date.now() - startTime) / 1000).toFixed(3) : '0.000';
+            
+            eventDiv.innerHTML = `
+                <div>Event #${++eventCount} [+${elapsed}s]</div>
+                <div><strong>Type:</strong> ${type}</div>
+                <div><strong>Data:</strong> ${JSON.stringify(data, null, 2)}</div>
+                <div class="timestamp">${timestamp}</div>
+            `;
+            
+            eventsDiv.insertBefore(eventDiv, eventsDiv.firstChild);
+            console.log(`Event received at +${elapsed}s:`, type, data);
+        }
+
+        async function startTest() {
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            // Clear previous events
+            document.getElementById('events').innerHTML = '';
+            eventCount = 0;
+            startTime = Date.now();
+            
+            updateStatus('Connecting...');
+            
+            try {
+                const response = await fetch('/api/v1/query/stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream',
+                    },
+                    body: JSON.stringify({
+                        prompt: "Tell me a very short joke about programming",
+                        model: "claude-sonnet-4-20250514",
+                        max_turns: 1
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                updateStatus('Connected - Streaming events...');
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let currentEventType = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('event:')) {
+                            currentEventType = line.slice(6).trim();
+                        } else if (line.startsWith('data:')) {
+                            try {
+                                const data = JSON.parse(line.slice(5).trim());
+                                addEvent(currentEventType || 'data', data);
+                                currentEventType = '';
+                            } catch (e) {
+                                console.error('Failed to parse:', line);
+                            }
+                        }
+                    }
+                }
+                
+                updateStatus('Stream completed');
+            } catch (error) {
+                updateStatus(`Error: ${error.message}`);
+                console.error('Stream error:', error);
+            }
+        }
+
+        function stopTest() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                updateStatus('Disconnected');
+            }
+        }
+    </script>
+</body>
+</html>

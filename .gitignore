@@ -62,3 +62,8 @@ aidd*
 
 # Logs
 logs/
+
+# MCP
+.mcp.json
+
+node_modules/

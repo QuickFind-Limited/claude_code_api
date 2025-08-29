@@ -67,9 +67,15 @@ class ClaudeService:
         )
 
         # Log query initiation with beautiful user-friendly formatting
+        logger.info("\n" + "=" * 80)
         self._log_user_friendly(
-            "🚀", "Starting", f"Processing your request with {request.model}"
+            "🚀",
+            "Query",
+            f"{request.prompt[:100]}..."
+            if len(request.prompt) > 100
+            else request.prompt,
         )
+        logger.info("=" * 80)
 
         if request.session_id:
             self._log_indented("Session", request.session_id[:8] + "...")
@@ -223,8 +229,26 @@ class ClaudeService:
             return ""
 
         if isinstance(input_data, dict):
+            # Special handling for TodoWrite
+            if tool_name == "TodoWrite":
+                todos = input_data.get("todos", [])
+                if todos:
+                    formatted_todos = []
+                    for i, todo in enumerate(todos, 1):
+                        status_emoji = {
+                            "pending": "⏳",
+                            "in_progress": "🔄",
+                            "completed": "✅",
+                        }.get(todo.get("status", "pending"), "⏳")
+                        content = todo.get("content", "")
+                        formatted_todos.append(f"{status_emoji} {content}")
+                    return "\n" + "\n".join(
+                        f"       {todo}" for todo in formatted_todos
+                    )
+                return "No todos"
+
             # Format based on common tool patterns
-            if tool_name.lower() in ["bash", "shell", "command"]:
+            elif tool_name.lower() in ["bash", "shell", "command"]:
                 return input_data.get("command", str(input_data))
             elif tool_name.lower() in ["read", "file_read"]:
                 return f"File: {input_data.get('file_path', input_data.get('path', str(input_data)))}"
@@ -350,7 +374,9 @@ class ClaudeService:
             data = message.data
             # Handle both dict and string data types
             if isinstance(data, dict):
-                self._log_user_friendly("🔧", "Setup", "Claude session initialized")
+                logger.info("\n" + "-" * 60)
+                self._log_user_friendly("🔧", "Session", "Initializing Claude session")
+                logger.info("-" * 60)
 
                 tools_count = 0
                 tool_names = []
@@ -377,6 +403,8 @@ class ClaudeService:
                         self._log_indented(
                             "MCP", f"{len(servers)} servers: {', '.join(server_names)}"
                         )
+
+                logger.info("-" * 60 + "\n")
 
                 # Emit session init event
                 await emit_event(
@@ -417,13 +445,39 @@ class ClaudeService:
         has_thinking = False
         has_tools = False
 
-        for i, block in enumerate(message.content):
+        for block in message.content:
             block_type = type(block).__name__
 
             if block_type == "TextBlock" or hasattr(block, "text"):
                 text = getattr(block, "text", str(block))
                 text_content.append(text)
-                logger.debug(f"Text block collected: {len(text)} characters")
+
+                # Log text content with nice formatting
+                if text.strip():
+                    # Format text with proper indentation and section headers
+                    lines = text.strip().split("\n")
+                    for line in lines:
+                        if line.strip():
+                            if line.startswith("#"):
+                                # Section headers
+                                self._log_user_friendly(
+                                    "📝", "Response", line.strip("# ")
+                                )
+                            elif line.startswith("**") and line.endswith("**"):
+                                # Bold sections
+                                self._log_user_friendly("💡", "Point", line.strip("*"))
+                            elif line.startswith("-") or line.startswith("•"):
+                                # Bullet points
+                                self._log_indented("", line)
+                            else:
+                                # Regular text - only log if substantial
+                                if len(line.strip()) > 20:
+                                    logger.info(
+                                        f"   {line.strip()[:120]}..."
+                                        if len(line.strip()) > 120
+                                        else f"   {line.strip()}"
+                                    )
+
                 has_text = True
 
             elif block_type == "ThinkingBlock" or hasattr(block, "thinking"):
@@ -538,13 +592,18 @@ class ClaudeService:
         self._current_tool_uses.append(tool_info)  # Track for result matching
         self.tools_used.append(block.name)
 
-        # Format tool call beautifully
-        self._log_user_friendly("🛠️", "Tool", block.name)
-
-        # Format input parameters in a clean, readable way
-        formatted_input = self._format_tool_input(block.input, block.name)
-        if formatted_input:
-            self._log_indented("Input", formatted_input)
+        # Special formatting for TodoWrite
+        if block.name == "TodoWrite":
+            self._log_user_friendly("📋", "Todo Update", "Managing task list")
+            formatted_input = self._format_tool_input(block.input, block.name)
+            if formatted_input:
+                logger.info(formatted_input)
+        else:
+            # Format other tool calls
+            self._log_user_friendly("🛠️", "Tool", block.name)
+            formatted_input = self._format_tool_input(block.input, block.name)
+            if formatted_input:
+                self._log_indented("Input", formatted_input)
 
         # Emit tool use event
         await emit_event(
@@ -552,7 +611,9 @@ class ClaudeService:
                 message=f"Using tool: {block.name}",
                 tool_name=block.name,
                 tool_id=block.id,
-                input_summary=formatted_input,
+                input_summary=formatted_input
+                if block.name != "TodoWrite"
+                else "Todo list update",
                 step_number=self.current_step,
             )
         )
@@ -573,40 +634,50 @@ class ClaudeService:
                 tool_name = tool_info.get("name", "unknown")
                 break
 
-        if is_error:
-            self._log_indented("Result", "❌ Error occurred")
-            if content:
-                error_msg = self._format_error_message(str(content))
-                self._log_indented("", f"   {error_msg}")
-
-            # Emit tool error event
-            await emit_event(
-                ToolErrorEvent(
-                    message=f"Tool {tool_name} failed",
-                    tool_id=tool_use_id,
-                    tool_name=tool_name,
-                    error_message=str(content) if content else "Unknown error",
-                )
-            )
-        else:
-            # Format result in a user-friendly way
-            result_summary = self._format_tool_result(content)
-            if result_summary:
-                self._log_indented("Result", f"✅ {result_summary}")
+        # Don't log TodoWrite results verbosely
+        if tool_name == "TodoWrite":
+            if not is_error:
+                self._log_indented("Result", "✅ Todos updated successfully")
             else:
-                self._log_indented("Result", "✅ Completed successfully")
+                self._log_indented("Result", "❌ Failed to update todos")
+                if content:
+                    error_msg = self._format_error_message(str(content))
+                    self._log_indented("", f"   {error_msg}")
+        else:
+            if is_error:
+                self._log_indented("Result", "❌ Error occurred")
+                if content:
+                    error_msg = self._format_error_message(str(content))
+                    self._log_indented("", f"   {error_msg}")
 
-            # Emit tool result event
-            await emit_event(
-                ToolResultEvent(
-                    message=f"Tool {tool_name} completed",
-                    tool_id=tool_use_id,
-                    tool_name=tool_name,
-                    success=True,
-                    result_summary=result_summary or "Completed successfully",
-                    result_size=len(str(content)) if content else 0,
+                # Emit tool error event
+                await emit_event(
+                    ToolErrorEvent(
+                        message=f"Tool {tool_name} failed",
+                        tool_id=tool_use_id,
+                        tool_name=tool_name,
+                        error_message=str(content) if content else "Unknown error",
+                    )
                 )
-            )
+            else:
+                # Format result in a user-friendly way
+                result_summary = self._format_tool_result(content)
+                if result_summary:
+                    self._log_indented("Result", f"✅ {result_summary}")
+                else:
+                    self._log_indented("Result", "✅ Completed successfully")
+
+                # Emit tool result event
+                await emit_event(
+                    ToolResultEvent(
+                        message=f"Tool {tool_name} completed",
+                        tool_id=tool_use_id,
+                        tool_name=tool_name,
+                        success=True,
+                        result_summary=result_summary or "Completed successfully",
+                        result_size=len(str(content)) if content else 0,
+                    )
+                )
 
     async def _process_result_message(
         self, message: ResultMessage, all_assistant_messages: List[str]
@@ -674,8 +745,10 @@ class ClaudeService:
     ) -> None:
         """Log a beautiful, comprehensive summary of the query execution."""
 
+        logger.info("\n" + "=" * 80)
         # Beautiful completion message
         self._log_user_friendly("✅", "Complete", f"Query processed in {duration:.2f}s")
+        logger.info("=" * 80)
 
         # Summary statistics
         if self.todos_extracted:
@@ -684,9 +757,21 @@ class ClaudeService:
             )
 
         if tool_uses:
-            unique_tools = set(tool["name"] for tool in tool_uses)
-            tools_text = ", ".join(unique_tools)
-            self._log_indented("Tools", f"Used {len(tool_uses)} tools: {tools_text}")
+            # Count TodoWrite separately
+            todo_writes = sum(1 for tool in tool_uses if tool["name"] == "TodoWrite")
+            other_tools = [
+                tool["name"] for tool in tool_uses if tool["name"] != "TodoWrite"
+            ]
+
+            if todo_writes > 0:
+                self._log_indented("Tasks", f"{todo_writes} todo list updates")
+
+            if other_tools:
+                unique_tools = set(other_tools)
+                tools_text = ", ".join(unique_tools)
+                self._log_indented(
+                    "Tools", f"Used {len(other_tools)} tools: {tools_text}"
+                )
 
         if response_text:
             word_count = len(response_text.split())
@@ -696,6 +781,8 @@ class ClaudeService:
             )
         else:
             self._log_user_friendly("⚠️", "Warning", "No response text generated")
+
+        logger.info("=" * 80 + "\n")
 
         # Reset state for next query
         self._reset_state()

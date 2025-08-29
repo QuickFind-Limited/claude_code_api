@@ -21,16 +21,173 @@
             padding: 20px;
         }
 
+        .main-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            height: 85vh;
+        }
+
         .chat-container {
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 900px;
-            height: 85vh;
+            flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+        }
+        
+        .events-panel {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        
+        .events-panel.collapsed {
+            width: 50px;
+        }
+        
+        .events-header {
+            background: linear-gradient(135deg, #48c774 0%, #3ec46d 100%);
+            padding: 15px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .events-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .events-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .events-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .events-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+        
+        .event-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #667eea;
+            animation: slideInRight 0.3s ease;
+            font-size: 13px;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .event-type {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .event-time {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        .event-data {
+            color: #666;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 5px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            word-break: break-all;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        .event-item.tool_use {
+            border-left-color: #3498db;
+        }
+        
+        .event-item.token_usage {
+            border-left-color: #f39c12;
+        }
+        
+        .event-item.thinking_start {
+            border-left-color: #9b59b6;
+        }
+        
+        .event-item.query_complete {
+            border-left-color: #2ecc71;
+        }
+        
+        .event-item.error {
+            border-left-color: #e74c3c;
+        }
+        
+        .events-counter {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .clear-events {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .clear-events:hover {
+            background: #c0392b;
         }
 
         .chat-header {
@@ -397,6 +554,113 @@
             margin: 5px 0;
         }
 
+        /* Metadata collapsible */
+        .message-metadata {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .metadata-toggle {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #6b7280;
+            user-select: none;
+            transition: color 0.2s ease;
+        }
+
+        .metadata-toggle:hover {
+            color: #667eea;
+        }
+
+        .metadata-toggle .arrow {
+            display: inline-block;
+            transition: transform 0.2s ease;
+            font-size: 10px;
+        }
+
+        .metadata-toggle.expanded .arrow {
+            transform: rotate(90deg);
+        }
+
+        .metadata-content {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .metadata-content.show {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .metadata-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .metadata-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .metadata-label {
+            font-weight: 600;
+            color: #4b5563;
+            min-width: 100px;
+        }
+
+        .metadata-value {
+            color: #6b7280;
+            flex: 1;
+        }
+
+        .tool-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tool-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .token-detail {
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .performance-metric {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 2px 6px;
+            background: rgba(103, 126, 234, 0.1);
+            border-radius: 4px;
+        }
+
         /* Scrollbar styling */
         .chat-messages::-webkit-scrollbar {
             width: 8px;
@@ -417,8 +681,9 @@
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
+    <div class="main-container">
+        <div class="chat-container">
+            <div class="chat-header">
             <div class="header-left">
                 <div class="header-title">
                     <span>🤖 Claude Chatbot</span>
@@ -489,6 +754,27 @@
                 </button>
             </div>
         </div>
+        </div>
+        
+        <!-- Events Panel -->
+        <div class="events-panel" id="eventsPanel">
+            <div class="events-header">
+                <div class="events-title">
+                    <span>📊</span>
+                    <span id="eventsPanelTitle">Live Events</span>
+                </div>
+                <button class="events-toggle" id="eventsToggle" onclick="toggleEventsPanel()">
+                    <span id="toggleIcon">◀</span>
+                </button>
+            </div>
+            <div class="events-list" id="eventsList">
+                <!-- Events will be added here dynamically -->
+            </div>
+            <div class="events-counter">
+                <span id="eventCounter">0 events</span>
+                <button class="clear-events" onclick="clearEvents()">Clear</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -501,6 +787,11 @@
         let isProcessing = false;
         let messageCount = 0;
         let totalTokensUsed = 0;
+        let eventSource = null;
+        let currentMetadata = null;
+        let currentMessageDiv = null;
+        let allEvents = [];
+        let eventsPanelCollapsed = false;
 
         // DOM elements
         const chatMessages = document.getElementById('chatMessages');
@@ -532,6 +823,506 @@
             
             // Load saved session if exists
             loadSession();
+            
+            // Connect to SSE if we have a session
+            if (currentSessionId) {
+                connectToSSE();
+            }
+        }
+        
+        // Connect to Server-Sent Events stream
+        function connectToSSE() {
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            const url = currentSessionId 
+                ? `${API_BASE}/stream/sse?session_id=${currentSessionId}`
+                : `${API_BASE}/stream/sse`;
+                
+            eventSource = new EventSource(url);
+            
+            eventSource.onopen = () => {
+                console.log('Connected to event stream');
+            };
+            
+            eventSource.onerror = (error) => {
+                console.error('SSE error:', error);
+                if (eventSource.readyState === EventSource.CLOSED) {
+                    console.log('SSE connection closed, will reconnect...');
+                    setTimeout(connectToSSE, 5000);
+                }
+            };
+            
+            // Handle different event types
+            // Add event listeners for all event types
+            eventSource.addEventListener('query_start', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Query start:', data);
+                    addEventToPanel(data);
+                } catch (e) {
+                    console.error('Error handling query start:', e);
+                }
+            });
+            
+            eventSource.addEventListener('session_init', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Session init:', data);
+                    addEventToPanel(data);
+                } catch (e) {
+                    console.error('Error handling session init:', e);
+                }
+            });
+            
+            eventSource.addEventListener('assistant_message', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Assistant message:', data);
+                    addEventToPanel(data);
+                } catch (e) {
+                    console.error('Error handling assistant message:', e);
+                }
+            });
+            
+            eventSource.addEventListener('tool_use', handleToolUseEvent);
+            eventSource.addEventListener('tool_result', handleToolResultEvent);
+            eventSource.addEventListener('token_usage', handleTokenUsageEvent);
+            eventSource.addEventListener('thinking_start', handleThinkingEvent);
+            eventSource.addEventListener('thinking_insight', handleThinkingInsightEvent);
+            eventSource.addEventListener('performance_metric', handlePerformanceEvent);
+            eventSource.addEventListener('query_complete', handleQueryCompleteEvent);
+            
+            // Generic handler for any other events
+            eventSource.addEventListener('message', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    // Only add if not already handled by specific listeners
+                    if (!['query_start', 'session_init', 'assistant_message', 'tool_use', 
+                          'tool_result', 'token_usage', 'thinking_start', 'thinking_insight',
+                          'performance_metric', 'query_complete'].includes(data.type)) {
+                        console.log('Generic event:', data);
+                        addEventToPanel(data);
+                    }
+                } catch (e) {
+                    // Ignore parse errors for non-JSON messages
+                }
+            });
+            
+            // Generic message handler for other events
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Event received:', data.type, data);
+                } catch (e) {
+                    console.error('Failed to parse event:', e);
+                }
+            };
+        }
+        
+        // Disconnect from SSE
+        function disconnectSSE() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+        }
+        
+        // Events Panel Management
+        function toggleEventsPanel() {
+            const panel = document.getElementById('eventsPanel');
+            const toggleIcon = document.getElementById('toggleIcon');
+            const panelTitle = document.getElementById('eventsPanelTitle');
+            
+            eventsPanelCollapsed = !eventsPanelCollapsed;
+            
+            if (eventsPanelCollapsed) {
+                panel.classList.add('collapsed');
+                toggleIcon.textContent = '▶';
+                panelTitle.style.display = 'none';
+            } else {
+                panel.classList.remove('collapsed');
+                toggleIcon.textContent = '◀';
+                panelTitle.style.display = 'inline';
+            }
+        }
+        
+        function clearEvents() {
+            allEvents = [];
+            document.getElementById('eventsList').innerHTML = '';
+            updateEventCounter();
+        }
+        
+        function updateEventCounter() {
+            document.getElementById('eventCounter').textContent = `${allEvents.length} events`;
+        }
+        
+        function addEventToPanel(eventData) {
+            const eventsList = document.getElementById('eventsList');
+            const eventTime = new Date().toLocaleTimeString();
+            
+            // Store event
+            allEvents.push(eventData);
+            
+            // Create event item
+            const eventItem = document.createElement('div');
+            eventItem.className = `event-item ${eventData.type || 'unknown'}`;
+            
+            // Get emoji for event type
+            const emoji = getEventEmoji(eventData.type);
+            
+            // Format event data for display
+            let dataDisplay = '';
+            if (eventData.type === 'tool_use' && eventData.tool_name) {
+                dataDisplay = `Tool: ${eventData.tool_name}`;
+            } else if (eventData.type === 'token_usage' && eventData.data) {
+                dataDisplay = `Tokens: ${eventData.data.total_tokens || 0}`;
+            } else if (eventData.type === 'thinking_start') {
+                dataDisplay = 'Thinking process started...';
+            } else if (eventData.type === 'query_complete') {
+                dataDisplay = 'Query completed successfully';
+            } else if (eventData.message) {
+                dataDisplay = eventData.message;
+            }
+            
+            eventItem.innerHTML = `
+                <div class="event-header">
+                    <div class="event-type">
+                        <span>${emoji}</span>
+                        <span>${eventData.type || 'event'}</span>
+                    </div>
+                    <div class="event-time">${eventTime}</div>
+                </div>
+                ${dataDisplay ? `<div class="event-data">${dataDisplay}</div>` : ''}
+            `;
+            
+            // Add to top of list
+            eventsList.insertBefore(eventItem, eventsList.firstChild);
+            
+            // Limit to last 100 events
+            if (eventsList.children.length > 100) {
+                eventsList.removeChild(eventsList.lastChild);
+                allEvents = allEvents.slice(-100);
+            }
+            
+            updateEventCounter();
+        }
+        
+        function getEventEmoji(eventType) {
+            const emojiMap = {
+                'query_start': '🚀',
+                'query_complete': '✅',
+                'tool_use': '🛠️',
+                'tool_result': '📦',
+                'token_usage': '📊',
+                'thinking_start': '🤔',
+                'thinking_insight': '💡',
+                'performance_metric': '⚡',
+                'error': '❌',
+                'session_init': '🔧',
+                'assistant_message': '🤖',
+                'user_message': '👤'
+            };
+            return emojiMap[eventType] || '📌';
+        }
+
+        // Event handlers for real-time updates
+        function handleToolUseEvent(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Tool use:', data);
+                
+                // Add to events panel
+                addEventToPanel(data);
+                
+                if (!currentMetadata) {
+                    currentMetadata = {
+                        toolsUsed: [],
+                        startTime: Date.now()
+                    };
+                }
+                
+                // Add tool to list if not already there
+                // The tool_name is at the top level of the event data
+                const toolName = data.tool_name || data.data?.tool_name;
+                if (toolName && !currentMetadata.toolsUsed.includes(toolName)) {
+                    currentMetadata.toolsUsed.push(toolName);
+                    updateLiveMetadata();
+                }
+                
+                // Show live indicator
+                showLiveIndicator(`🛠️ Using: ${toolName || 'Tool'}`);
+            } catch (e) {
+                console.error('Error handling tool use event:', e);
+            }
+        }
+        
+        function handleToolResultEvent(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Tool result:', data);
+                addEventToPanel(data);
+                showLiveIndicator(`✅ Tool completed`);
+            } catch (e) {
+                console.error('Error handling tool result:', e);
+            }
+        }
+        
+        function handleTokenUsageEvent(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Token usage:', data);
+                addEventToPanel(data);
+                
+                if (!currentMetadata) {
+                    currentMetadata = { startTime: Date.now() };
+                }
+                
+                currentMetadata.tokenUsage = data.data;
+                updateLiveMetadata();
+                
+                // Update global metrics
+                if (data.data) {
+                    const inputTokens = data.data.input_tokens || 0;
+                    const outputTokens = data.data.output_tokens || 0;
+                    const total = data.data.total_tokens || (inputTokens + outputTokens);
+                    
+                    totalTokensUsed += total;
+                    
+                    inputTokensEl.textContent = inputTokens.toLocaleString();
+                    outputTokensEl.textContent = outputTokens.toLocaleString();
+                    totalTokensEl.textContent = totalTokensUsed.toLocaleString();
+                }
+            } catch (e) {
+                console.error('Error handling token usage event:', e);
+            }
+        }
+        
+        function handleThinkingEvent(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Thinking started:', data);
+                addEventToPanel(data);
+                showLiveIndicator('🤔 Thinking...');
+            } catch (e) {
+                console.error('Error handling thinking event:', e);
+            }
+        }
+        
+        function handleThinkingInsightEvent(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Thinking insight:', data);
+                addEventToPanel(data);
+                showLiveIndicator(`💡 ${data.message || 'Processing...'}`);
+            } catch (e) {
+                console.error('Error handling thinking insight:', e);
+            }
+        }
+        
+        function handlePerformanceEvent(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Performance metric:', data);
+                addEventToPanel(data);
+                
+                if (data.data?.query_time) {
+                    responseTimeEl.textContent = `${data.data.query_time.toFixed(2)}s`;
+                }
+            } catch (e) {
+                console.error('Error handling performance event:', e);
+            }
+        }
+        
+        function handleQueryCompleteEvent(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Query complete:', data);
+                addEventToPanel(data);
+                hideLiveIndicator();
+            } catch (e) {
+                console.error('Error handling query complete event:', e);
+            }
+        }
+        
+        // Show live indicator during processing
+        function showLiveIndicator(message) {
+            // Remove existing indicator if any
+            hideLiveIndicator();
+            
+            // Create live indicator element
+            const indicator = document.createElement('div');
+            indicator.id = 'liveIndicator';
+            indicator.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 20px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: slideUp 0.3s ease;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            indicator.innerHTML = `<span style="animation: pulse 1s infinite;">${message}</span>`;
+            document.body.appendChild(indicator);
+            
+            // Auto-hide after 3 seconds
+            setTimeout(hideLiveIndicator, 3000);
+        }
+        
+        function hideLiveIndicator() {
+            const indicator = document.getElementById('liveIndicator');
+            if (indicator) {
+                indicator.style.animation = 'slideDown 0.3s ease';
+                setTimeout(() => indicator.remove(), 300);
+            }
+        }
+        
+        // Update live metadata display
+        function updateLiveMetadata() {
+            if (!currentMessageDiv || !currentMetadata) return;
+            
+            // Find or create metadata section
+            let metadataSection = currentMessageDiv.querySelector('.message-metadata');
+            if (!metadataSection) {
+                // Create metadata section if it doesn't exist
+                const messageContent = currentMessageDiv.querySelector('.message-content');
+                if (messageContent) {
+                    const metadataId = `metadata-live-${Date.now()}`;
+                    const metadataHtml = `
+                        <div class="message-metadata">
+                            <div class="metadata-toggle expanded" onclick="toggleMetadata('${metadataId}')">
+                                <span class="arrow">▼</span>
+                                <span>Live Details</span>
+                            </div>
+                            <div class="metadata-content show" id="${metadataId}">
+                                <!-- Content will be updated -->
+                            </div>
+                        </div>
+                    `;
+                    messageContent.insertAdjacentHTML('beforeend', metadataHtml);
+                    metadataSection = messageContent.querySelector('.message-metadata');
+                }
+            }
+            
+            // Update metadata content
+            const metadataContent = metadataSection?.querySelector('.metadata-content');
+            if (metadataContent) {
+                let html = '';
+                
+                // Response time (live)
+                if (currentMetadata.startTime) {
+                    const elapsed = ((Date.now() - currentMetadata.startTime) / 1000).toFixed(1);
+                    html += `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Elapsed Time:</div>
+                            <div class="metadata-value">⏱️ ${elapsed}s (processing...)</div>
+                        </div>
+                    `;
+                }
+                
+                // Tools used (live)
+                if (currentMetadata.toolsUsed && currentMetadata.toolsUsed.length > 0) {
+                    html += `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Tools Used:</div>
+                            <div class="metadata-value">
+                                <div class="tool-list">
+                                    ${currentMetadata.toolsUsed.map(tool => 
+                                        `<span class="tool-badge">🛠️ ${tool}</span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Token usage (live)
+                if (currentMetadata.tokenUsage) {
+                    html += `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Token Usage:</div>
+                            <div class="metadata-value">
+                                <span class="token-detail">📥 Input: ${currentMetadata.tokenUsage.input_tokens || 0}</span>
+                                <span class="token-detail">📤 Output: ${currentMetadata.tokenUsage.output_tokens || 0}</span>
+                                <span class="token-detail">📊 Total: ${currentMetadata.tokenUsage.total_tokens || 0}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                metadataContent.innerHTML = html;
+            }
+        }
+
+        // Build metadata HTML for display
+        function buildMetadataHtml(metadata, metadataId) {
+            if (!metadata) return '';
+            
+            return `
+                <div class="message-metadata">
+                    <div class="metadata-toggle" onclick="toggleMetadata('${metadataId}')">
+                        <span class="arrow">▶</span>
+                        <span>View Details</span>
+                    </div>
+                    <div class="metadata-content" id="${metadataId}">
+                        ${metadata.responseTime ? `
+                            <div class="metadata-item">
+                                <div class="metadata-label">Response Time:</div>
+                                <div class="metadata-value">⏱️ ${metadata.responseTime}s</div>
+                            </div>
+                        ` : ''}
+                        ${metadata.toolsUsed && metadata.toolsUsed.length > 0 ? `
+                            <div class="metadata-item">
+                                <div class="metadata-label">Tools Used:</div>
+                                <div class="metadata-value">
+                                    <div class="tool-list">
+                                        ${metadata.toolsUsed.map(tool => 
+                                            `<span class="tool-badge">🛠️ ${tool}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${metadata.tokenUsage ? `
+                            <div class="metadata-item">
+                                <div class="metadata-label">Token Usage:</div>
+                                <div class="metadata-value">
+                                    <span class="token-detail">📥 Input: ${metadata.tokenUsage.input_tokens || 0}</span>
+                                    <span class="token-detail">📤 Output: ${metadata.tokenUsage.output_tokens || 0}</span>
+                                    <span class="token-detail">📊 Total: ${metadata.tokenUsage.total_tokens || 0}</span>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${metadata.thinkingTime ? `
+                            <div class="metadata-item">
+                                <div class="metadata-label">Thinking Time:</div>
+                                <div class="metadata-value">🤔 ${metadata.thinkingTime}s</div>
+                            </div>
+                        ` : ''}
+                        ${metadata.model ? `
+                            <div class="metadata-item">
+                                <div class="metadata-label">Model:</div>
+                                <div class="metadata-value">🧠 ${metadata.model}</div>
+                            </div>
+                        ` : ''}
+                        ${metadata.sessionId ? `
+                            <div class="metadata-item">
+                                <div class="metadata-label">Session:</div>
+                                <div class="metadata-value">🔑 ${metadata.sessionId.substring(0, 8)}...</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
         }
 
         // Auto-resize textarea
@@ -596,7 +1387,7 @@
             
             // Render all messages
             messageHistory.forEach(msg => {
-                addMessageToChat(msg.content, msg.role, msg.timestamp, false);
+                addMessageToChat(msg.content, msg.role, msg.timestamp, false, msg.metadata);
             });
             
             // Update metrics
@@ -682,13 +1473,22 @@
             chatInput.value = '';
             autoResizeTextarea();
             
-            // Show typing indicator
-            showTypingIndicator();
+            // Show typing indicator and prepare for live updates
+            currentMessageDiv = showTypingIndicator();
+            currentMetadata = {
+                toolsUsed: [],
+                startTime: Date.now()
+            };
             
             // Show metrics bar
             metricsBar.style.display = 'flex';
             
             const startTime = Date.now();
+            
+            // Connect to SSE if not connected
+            if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+                connectToSSE();
+            }
             
             try {
                 // Prepare request
@@ -724,16 +1524,71 @@
                     sessionIdDisplay.textContent = currentSessionId;
                 }
                 
-                // Hide typing indicator
-                hideTypingIndicator();
-                
-                // Add assistant response
-                addMessageToChat(data.response, 'assistant');
-                messageHistory.push({
-                    role: 'assistant',
-                    content: data.response,
-                    timestamp: new Date().toISOString()
-                });
+                // Convert typing indicator to actual message
+                if (currentMessageDiv && currentMessageDiv.querySelector('.typing-indicator')) {
+                    const time = new Date();
+                    const timeStr = time.toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    
+                    // Merge live metadata with final metadata
+                    const metadata = {
+                        responseTime: ((Date.now() - startTime) / 1000).toFixed(2),
+                        model: modelSelector.options[modelSelector.selectedIndex].text,
+                        sessionId: currentSessionId,
+                        tokenUsage: currentMetadata?.tokenUsage || data.token_usage,
+                        toolsUsed: currentMetadata?.toolsUsed || data.tools_used || [],
+                        thinkingTime: data.thinking_time,
+                        messageCount: data.message_count
+                    };
+                    
+                    // Format content
+                    const formattedContent = formatMessage(data.response);
+                    
+                    // Build final metadata HTML
+                    const metadataId = `metadata-${Date.now()}`;
+                    const metadataHtml = buildMetadataHtml(metadata, metadataId);
+                    
+                    // Replace typing indicator with actual message
+                    currentMessageDiv.innerHTML = `
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            ${formattedContent}
+                            <div class="message-time">${timeStr}</div>
+                            ${metadataHtml}
+                        </div>
+                    `;
+                    
+                    // Save to history
+                    messageHistory.push({
+                        role: 'assistant',
+                        content: data.response,
+                        timestamp: new Date().toISOString(),
+                        metadata: metadata
+                    });
+                } else {
+                    // Fallback to regular message adding
+                    hideTypingIndicator();
+                    
+                    const metadata = {
+                        responseTime: ((Date.now() - startTime) / 1000).toFixed(2),
+                        model: modelSelector.options[modelSelector.selectedIndex].text,
+                        sessionId: currentSessionId,
+                        tokenUsage: data.token_usage,
+                        toolsUsed: data.tools_used || [],
+                        thinkingTime: data.thinking_time,
+                        messageCount: data.message_count
+                    };
+                    
+                    addMessageToChat(data.response, 'assistant', null, true, metadata);
+                    messageHistory.push({
+                        role: 'assistant',
+                        content: data.response,
+                        timestamp: new Date().toISOString(),
+                        metadata: metadata
+                    });
+                }
                 
                 // Update metrics
                 const responseTime = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -768,7 +1623,7 @@
         }
 
         // Add message to chat
-        function addMessageToChat(content, role, timestamp = null, shouldScroll = true) {
+        function addMessageToChat(content, role, timestamp = null, shouldScroll = true, metadata = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${role}`;
             
@@ -781,6 +1636,66 @@
             // Format content (basic markdown support)
             const formattedContent = formatMessage(content);
             
+            // Build metadata HTML if assistant message with metadata
+            let metadataHtml = '';
+            if (role === 'assistant' && metadata) {
+                const metadataId = `metadata-${Date.now()}`;
+                metadataHtml = `
+                    <div class="message-metadata">
+                        <div class="metadata-toggle" onclick="toggleMetadata('${metadataId}')">
+                            <span class="arrow">▶</span>
+                            <span>View Details</span>
+                        </div>
+                        <div class="metadata-content" id="${metadataId}">
+                            ${metadata.responseTime ? `
+                                <div class="metadata-item">
+                                    <div class="metadata-label">Response Time:</div>
+                                    <div class="metadata-value">${metadata.responseTime}s</div>
+                                </div>
+                            ` : ''}
+                            ${metadata.model ? `
+                                <div class="metadata-item">
+                                    <div class="metadata-label">Model:</div>
+                                    <div class="metadata-value">Claude ${metadata.model}</div>
+                                </div>
+                            ` : ''}
+                            ${metadata.tokenUsage ? `
+                                <div class="metadata-item">
+                                    <div class="metadata-label">Token Usage:</div>
+                                    <div class="metadata-value">
+                                        <span class="token-detail">📥 Input: ${metadata.tokenUsage.input_tokens || 0}</span>
+                                        <span class="token-detail">📤 Output: ${metadata.tokenUsage.output_tokens || 0}</span>
+                                        <span class="token-detail">📊 Total: ${metadata.tokenUsage.total_tokens || 0}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${metadata.toolsUsed && metadata.toolsUsed.length > 0 ? `
+                                <div class="metadata-item">
+                                    <div class="metadata-label">Tools Used:</div>
+                                    <div class="metadata-value">
+                                        <div class="tool-list">
+                                            ${metadata.toolsUsed.map(tool => `<span class="tool-badge">🛠️ ${tool}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${metadata.thinkingTime ? `
+                                <div class="metadata-item">
+                                    <div class="metadata-label">Thinking Time:</div>
+                                    <div class="metadata-value">${metadata.thinkingTime}s</div>
+                                </div>
+                            ` : ''}
+                            ${metadata.sessionId ? `
+                                <div class="metadata-item">
+                                    <div class="metadata-label">Session ID:</div>
+                                    <div class="metadata-value" style="font-family: monospace; font-size: 11px;">${metadata.sessionId}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
             messageDiv.innerHTML = `
                 <div class="message-avatar">
                     ${role === 'user' ? '👤' : '🤖'}
@@ -788,6 +1703,7 @@
                 <div class="message-content">
                     ${formattedContent}
                     <div class="message-time">${timeStr}</div>
+                    ${metadataHtml}
                 </div>
             `;
             
@@ -795,6 +1711,20 @@
             
             if (shouldScroll) {
                 scrollToBottom();
+            }
+        }
+        
+        // Toggle metadata visibility
+        function toggleMetadata(metadataId) {
+            const metadataContent = document.getElementById(metadataId);
+            const toggle = metadataContent.previousElementSibling;
+            
+            if (metadataContent.classList.contains('show')) {
+                metadataContent.classList.remove('show');
+                toggle.classList.remove('expanded');
+            } else {
+                metadataContent.classList.add('show');
+                toggle.classList.add('expanded');
             }
         }
 
@@ -853,7 +1783,9 @@
                 `;
                 chatMessages.appendChild(typingDiv);
                 scrollToBottom();
+                return typingDiv;
             }
+            return existing.closest('.message');
         }
 
         // Hide typing indicator

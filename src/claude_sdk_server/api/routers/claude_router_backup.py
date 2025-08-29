@@ -98,14 +98,9 @@ async def query_claude_stream(
         client = await event_manager.connect_client(subscription, connection_type="sse")
 
         try:
-            # Send initial event as dict for sse-starlette
-            yield {
-                "event": "connection",
-                "data": json.dumps({"status": "connected", "client_id": client_id}),
-            }
-
-            # Small delay to ensure SSE connection is fully established
-            await asyncio.sleep(0.1)
+            # Send initial event
+            yield "event: connection\n"
+            yield f"data: {json.dumps({'status': 'connected', 'client_id': client_id})}\n\n"
 
             # Start the query in background
             query_task = asyncio.create_task(service.query(request))
@@ -160,15 +155,15 @@ async def query_claude_stream(
                 try:
                     # Get event with very short timeout to check query status frequently
                     event = await asyncio.wait_for(event_queue.get(), timeout=0.001)
-                    # Event is already a dict from format_event_for_sse
                     yield event
+                    # Yield a keep-alive comment to force flush
+                    yield f": flush at {asyncio.get_event_loop().time()}\n\n"
                     last_yield_time = asyncio.get_event_loop().time()
                 except asyncio.TimeoutError:
                     # Send keep-alive every 100ms to prevent buffering
                     current_time = asyncio.get_event_loop().time()
                     if current_time - last_yield_time > 0.1:
-                        # Send keepalive as comment dict for sse-starlette
-                        yield {"comment": "keepalive"}
+                        yield ": keepalive\n\n"
                         last_yield_time = current_time
                     # No event available, continue checking
                     await asyncio.sleep(0.0001)  # Even shorter sleep
@@ -182,34 +177,23 @@ async def query_claude_stream(
                 while asyncio.get_event_loop().time() < end_time:
                     try:
                         event = await asyncio.wait_for(event_queue.get(), timeout=0.01)
-                        # Event is already a dict from format_event_for_sse
                         yield event
                     except asyncio.TimeoutError:
                         if event_queue.empty():
                             await asyncio.sleep(0.01)
 
-                # Send final response event as dict
-                yield {
-                    "event": "response",
-                    "data": json.dumps(
-                        {
-                            "response": response.response,
-                            "session_id": response.session_id,
-                        }
-                    ),
-                }
+                # Send final response event
+                yield "event: response\n"
+                yield f"data: {json.dumps({'response': response.response, 'session_id': response.session_id})}\n\n"
 
-                # Send completion event as dict
-                yield {
-                    "event": "complete",
-                    "data": json.dumps(
-                        {"status": "completed", "session_id": response.session_id}
-                    ),
-                }
+                # Send completion event
+                yield "event: complete\n"
+                yield f"data: {json.dumps({'status': 'completed', 'session_id': response.session_id})}\n\n"
 
             except Exception as e:
-                # Send error event as dict
-                yield {"event": "error", "data": json.dumps({"error": str(e)})}
+                # Send error event
+                yield "event: error\n"
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
             # Cleanup event stream task
             if event_stream_task and not event_stream_task.done():
@@ -304,8 +288,8 @@ async def format_event_for_sse(event) -> str:
     if hasattr(event, "data") and event.data:
         formatted_data["data"] = event.data
 
-    # Return as dict for sse-starlette
-    return {"event": "log", "data": json.dumps(formatted_data)}
+    # Format as SSE
+    return f"event: log\ndata: {json.dumps(formatted_data)}\n\n"
 
 
 @router.get("/health")

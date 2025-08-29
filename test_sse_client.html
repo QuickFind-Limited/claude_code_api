@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude SDK Server - SSE Stream Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #58a6ff;
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+        }
+        
+        .controls {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            color: #8b949e;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        textarea, select {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #2ea043;
+        }
+        
+        button:disabled {
+            background: #21262d;
+            color: #8b949e;
+            cursor: not-allowed;
+        }
+        
+        button.stop {
+            background: #da3633;
+        }
+        
+        button.stop:hover {
+            background: #f85149;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status.connected {
+            background: #1f6feb;
+            color: white;
+        }
+        
+        .status.disconnected {
+            background: #8b949e;
+            color: white;
+        }
+        
+        .status.error {
+            background: #da3633;
+            color: white;
+        }
+        
+        .stream-container {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .event-log {
+            font-size: 14px;
+        }
+        
+        .event-item {
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            border-left: 3px solid transparent;
+            background: #161b22;
+            border-radius: 4px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .event-item.session {
+            border-left-color: #1f6feb;
+        }
+        
+        .event-item.query {
+            border-left-color: #58a6ff;
+        }
+        
+        .event-item.thinking {
+            border-left-color: #ffa657;
+        }
+        
+        .event-item.todo {
+            border-left-color: #a371f7;
+        }
+        
+        .event-item.tool {
+            border-left-color: #56d364;
+        }
+        
+        .event-item.result {
+            border-left-color: #2ea043;
+        }
+        
+        .event-item.error {
+            border-left-color: #f85149;
+            background: #1e1515;
+        }
+        
+        .event-item.complete {
+            border-left-color: #56d364;
+            background: #151e15;
+        }
+        
+        .event-display {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .event-details {
+            color: #8b949e;
+            font-size: 12px;
+            margin-left: 20px;
+        }
+        
+        .event-timestamp {
+            color: #484f58;
+            font-size: 11px;
+            float: right;
+        }
+        
+        .clear-button {
+            background: #21262d;
+            color: #8b949e;
+        }
+        
+        .clear-button:hover {
+            background: #30363d;
+            color: #c9d1d9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Claude SDK Server - Live SSE Stream</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="prompt">Query Prompt:</label>
+                <textarea id="prompt" placeholder="Enter your query for Claude...">Have a deep think on how a startup in procurement could revolutionize the field thanks to AI.</textarea>
+            </div>
+            
+            <div class="input-group">
+                <label for="model">Model:</label>
+                <select id="model">
+                    <option value="claude-opus-4-1-20250805">Claude Opus 4.1</option>
+                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                    <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="thinking">Max Thinking Tokens:</label>
+                <input type="number" id="thinking" value="15000" style="width: 200px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; padding: 8px 12px; border-radius: 6px;">
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button id="startBtn" onclick="startStream()">Start Streaming</button>
+                <button id="stopBtn" class="stop" onclick="stopStream()" disabled>Stop</button>
+                <button class="clear-button" onclick="clearLog()">Clear Log</button>
+                <span id="status" class="status disconnected">Disconnected</span>
+            </div>
+        </div>
+        
+        <div class="stream-container">
+            <div id="eventLog" class="event-log">
+                <div style="color: #8b949e; text-align: center; padding: 50px;">
+                    Ready to stream events. Click "Start Streaming" to begin.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+        }
+        
+        function getEventClass(type) {
+            if (type.includes('session') || type.includes('init')) return 'session';
+            if (type.includes('query')) return 'query';
+            if (type.includes('thinking')) return 'thinking';
+            if (type.includes('todo')) return 'todo';
+            if (type.includes('tool')) return 'tool';
+            if (type.includes('result')) return 'result';
+            if (type.includes('error')) return 'error';
+            if (type.includes('complete')) return 'complete';
+            return '';
+        }
+        
+        function addEvent(data) {
+            const log = document.getElementById('eventLog');
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event-item ${getEventClass(data.type)}`;
+            
+            let html = `<div class="event-display">${data.display || data.type}</div>`;
+            
+            if (data.timestamp) {
+                html += `<span class="event-timestamp">${formatTime(data.timestamp)}</span>`;
+            }
+            
+            if (data.details) {
+                if (typeof data.details === 'string') {
+                    html += `<div class="event-details">${data.details}</div>`;
+                } else {
+                    const details = Object.entries(data.details)
+                        .filter(([k, v]) => v !== null && v !== undefined)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(' | ');
+                    if (details) {
+                        html += `<div class="event-details">${details}</div>`;
+                    }
+                }
+            }
+            
+            eventDiv.innerHTML = html;
+            log.appendChild(eventDiv);
+            
+            // Auto-scroll to bottom
+            log.parentElement.scrollTop = log.parentElement.scrollHeight;
+        }
+        
+        function startStream() {
+            const prompt = document.getElementById('prompt').value;
+            const model = document.getElementById('model').value;
+            const maxThinking = parseInt(document.getElementById('thinking').value) || 0;
+            
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+            
+            // Clear previous log
+            clearLog();
+            
+            // Update UI
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('status').className = 'status connected';
+            document.getElementById('status').textContent = 'Connecting...';
+            
+            // Create SSE connection
+            const url = 'http://localhost:8001/api/v1/query/stream';
+            
+            // Use fetch with EventSource polyfill for POST
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    model: model,
+                    max_thinking_tokens: maxThinking,
+                    max_turns: 30
+                })
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                document.getElementById('status').textContent = 'Connected';
+                
+                function readStream() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) {
+                            stopStream();
+                            return;
+                        }
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop(); // Keep incomplete line in buffer
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    
+                                    if (data.status === 'completed') {
+                                        addEvent({
+                                            type: 'complete',
+                                            display: '✅ Stream completed successfully',
+                                            timestamp: new Date().toISOString()
+                                        });
+                                        stopStream();
+                                    } else if (data.error) {
+                                        addEvent({
+                                            type: 'error',
+                                            display: `❌ Error: ${data.error}`,
+                                            timestamp: new Date().toISOString()
+                                        });
+                                        stopStream();
+                                    } else if (data.response) {
+                                        // Final response
+                                        addEvent({
+                                            type: 'response',
+                                            display: '📄 Final Response Received',
+                                            details: `${data.response.split(' ').length} words`,
+                                            timestamp: new Date().toISOString()
+                                        });
+                                    } else {
+                                        addEvent(data);
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to parse event:', e);
+                                }
+                            }
+                        }
+                        
+                        readStream();
+                    }).catch(error => {
+                        console.error('Stream error:', error);
+                        addEvent({
+                            type: 'error',
+                            display: `❌ Stream error: ${error.message}`,
+                            timestamp: new Date().toISOString()
+                        });
+                        stopStream();
+                    });
+                }
+                
+                readStream();
+                
+            }).catch(error => {
+                console.error('Connection error:', error);
+                addEvent({
+                    type: 'error',
+                    display: `❌ Connection failed: ${error.message}`,
+                    timestamp: new Date().toISOString()
+                });
+                stopStream();
+            });
+        }
+        
+        function stopStream() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('status').className = 'status disconnected';
+            document.getElementById('status').textContent = 'Disconnected';
+        }
+        
+        function clearLog() {
+            document.getElementById('eventLog').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

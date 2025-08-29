@@ -179,6 +179,11 @@ start-all: up
 
 # ============================================================================
 # DEVELOPMENT COMMANDS
+
+# Run server locally without Docker
+run-local:
+	@echo "$(GREEN)Starting Claude SDK Server locally on port $(PORT)...$(NC)"
+	@uv run --env-file .env uvicorn src.claude_sdk_server.main:app --reload --host 0.0.0.0 --port $(PORT)
 # ============================================================================
 
 # Watch logs with beautiful formatting

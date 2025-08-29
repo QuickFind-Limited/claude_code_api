@@ -1,0 +1,313 @@
+{
+  "links": [
+    {
+      "rel": "self",
+      "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/salesorder/19100"
+    }
+  ],
+  "alaConfiguration": {
+    "links": [],
+    "id": "3",
+    "refName": "IR B2C Rule"
+  },
+  "altShippingCost": 4.02,
+  "billAddress": "Brian Delaney\n3 Ard Na Dara\nClonard Wexford Y35 Y6N7\nIreland",
+  "billingAddress": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/salesorder/19100/billingAddress"
+      }
+    ]
+  },
+  "billingAddress_text": "Brian Delaney\n3 Ard Na Dara\nClonard Wexford Y35 Y6N7\nIreland",
+  "canBeUnapproved": false,
+  "canHaveStackable": true,
+  "class": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/classification/102"
+      }
+    ],
+    "id": "102",
+    "refName": "Online eCommerce : EU Website"
+  },
+  "createdDate": "2022-07-21T19:20:00Z",
+  "currency": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/currency/1"
+      }
+    ],
+    "id": "1",
+    "refName": "EUR"
+  },
+  "custbody_15699_exclude_from_ep_process": false,
+  "custbody_alf_cfg": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customrecord_alf_cfg/1"
+      }
+    ],
+    "id": "1",
+    "refName": "ALF Configuration"
+  },
+  "custbody_alf_cominv_export_rate": false,
+  "custbody_alf_cominv_shiptocountry": "IE",
+  "custbody_alf_currency_symbol": "\u20ac",
+  "custbody_alf_cust_inv_translations": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customrecord_alf_cust_inv_translations/1"
+      }
+    ],
+    "id": "1",
+    "refName": "1"
+  },
+  "custbody_alf_hide_total_vat_in_compinf": false,
+  "custbody_alf_invoice_subsidcurrency": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/currency/1"
+      }
+    ],
+    "id": "1",
+    "refName": "EUR"
+  },
+  "custbody_alf_print_payment_installment": false,
+  "custbody_alf_sub_lock": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customlist_alf_lock_invoice_mode/1"
+      }
+    ],
+    "id": "1",
+    "refName": "No Lock"
+  },
+  "custbody_alf_subsidiary_address": "Gym Plus Coffee Ltd\n2 Kilvere Park\nCypress Downs\nDublin  D6W XE43\nIreland",
+  "custbody_alf_subsidiary_legal_name": "Gym Plus Coffee Ltd",
+  "custbody_alf_subsidiary_name": "Gym Plus Coffee Ltd",
+  "custbody_alf_tx_hide_total_vat": false,
+  "custbody_alf_tx_print_details": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customrecord_alf_pdf_watermark/53339"
+      }
+    ],
+    "id": "53339",
+    "refName": "53339"
+  },
+  "custbody_atlas_exist_cust_hdn": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customlist_atlas_cust_type/2"
+      }
+    ],
+    "id": "2",
+    "refName": "Existing Customer"
+  },
+  "custbody_atlas_new_cust_hdn": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customlist_atlas_cust_type/1"
+      }
+    ],
+    "id": "1",
+    "refName": "New Customer"
+  },
+  "custbody_atlas_no_hdn": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customlist_atlas_appr_by_creator/2"
+      }
+    ],
+    "id": "2",
+    "refName": "No"
+  },
+  "custbody_atlas_yes_hdn": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customlist_atlas_appr_by_creator/1"
+      }
+    ],
+    "id": "1",
+    "refName": "Yes"
+  },
+  "custbody_ca_external_order": false,
+  "custbody_ca_fba_order": false,
+  "custbody_ca_sale": false,
+  "custbody_ca_sfp_order": false,
+  "custbody_customer_email": "delaneybrian@hotmail.com",
+  "custbody_emea_transaction_type": "salesord",
+  "custbody_esc_created_date": "2022-07-21",
+  "custbody_esc_last_modified_date": "2023-06-20",
+  "custbody_nondeductible_ref_tran": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/salesorder/19100/custbody_nondeductible_ref_tran"
+      }
+    ]
+  },
+  "custbody_ns_fordeletion": false,
+  "custbody_order_internal_id": "19100",
+  "custbody_pwks_import_hash": "949f8f94fcc6a4db3475aa207df2a533",
+  "custbody_pwks_import_timestamp": 1658431216,
+  "custbody_pwks_remote_order_id": "4507653734574",
+  "custbody_pwks_remote_order_name": "577658IE",
+  "custbody_pwks_remote_order_source": "Shopify EU Live",
+  "custbody_pwks_resync_record": false,
+  "custbody_report_timestamp": "21/07/2022 12:20:11",
+  "custbody_shopify_order_name": "577658IE",
+  "custbody_shopify_total_amount": "74.95",
+  "custbody_sii_article_61d": false,
+  "custbody_sii_article_72_73": false,
+  "custbody_sii_is_third_party": false,
+  "custbody_sii_not_reported_in_time": false,
+  "custbody_stc_amount_after_discount": 56.91,
+  "custbody_stc_tax_after_discount": 13.09,
+  "custbody_stc_total_after_discount": 74.94,
+  "custbodycustbody_ns_forclosing": false,
+  "custbodycustcol_high_risk": false,
+  "custbodystockholdorder": false,
+  "customForm": {
+    "id": "139",
+    "refName": "GPC_Sales Order"
+  },
+  "department": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/department/109"
+      }
+    ],
+    "id": "109",
+    "refName": "eCommerce"
+  },
+  "discountTotal": 0.0,
+  "entity": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/customer/54"
+      }
+    ],
+    "id": "54",
+    "refName": "6 EU Webstore"
+  },
+  "estGrossProfit": 45.54,
+  "estGrossProfitPercent": 80.007,
+  "exchangeRate": 1.0,
+  "externalId": "4.507653734574E12",
+  "giftCertApplied": 0.0,
+  "giftCertRedemption": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/salesorder/19100/giftCertRedemption"
+      }
+    ]
+  },
+  "handlingMode": {
+    "id": "SAVE_ONLY",
+    "refName": "Save Only"
+  },
+  "id": "19100",
+  "isCrossSubTransaction": true,
+  "isMultiShipTo": false,
+  "item": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/salesorder/19100/item"
+      }
+    ]
+  },
+  "lastModifiedDate": "2023-06-20T13:15:00Z",
+  "linkedTrackingNumbers": "CE336998737IE",
+  "needsPick": false,
+  "orderStatus": {
+    "id": "G",
+    "refName": "G"
+  },
+  "prevDate": "2022-07-21",
+  "salesEffectiveDate": "2022-07-21",
+  "salesTeam": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/salesorder/19100/salesTeam"
+      }
+    ]
+  },
+  "shipAddress": "Brian Delaney\n3 Ard Na Dara\nClonard Wexford Y35 Y6N7\nIreland",
+  "shipComplete": false,
+  "shipDate": "2022-07-21",
+  "shipGroup": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/salesorder/19100/shipGroup"
+      }
+    ]
+  },
+  "shipIsResidential": false,
+  "shipMethod": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/shipitem/3533"
+      }
+    ],
+    "id": "3533",
+    "refName": "Standard"
+  },
+  "shipOverride": false,
+  "shippingAddress": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/salesorder/19100/shippingAddress"
+      }
+    ]
+  },
+  "shippingAddress_text": "Brian Delaney\n3 Ard Na Dara\nClonard Wexford Y35 Y6N7\nIreland",
+  "shippingCost": 4.02,
+  "shippingCostOverridden": true,
+  "status": {
+    "id": "G",
+    "refName": "Billed"
+  },
+  "subsidiary": {
+    "links": [
+      {
+        "rel": "self",
+        "href": "https://7326096-sb1.suitetalk.api.netsuite.com/services/rest/record/v1/subsidiary/2"
+      }
+    ],
+    "id": "2",
+    "refName": "Gym Plus Coffee Ltd"
+  },
+  "subtotal": 56.92,
+  "suppressUserEventsAndEmails": "F",
+  "toBeEmailed": false,
+  "toBeFaxed": false,
+  "toBePrinted": false,
+  "total": 74.95,
+  "totalCostEstimate": 11.38,
+  "tranDate": "2022-07-21",
+  "tranId": "SO100",
+  "updateDropshipOrderQty": "T",
+  "webStore": "F"
+}

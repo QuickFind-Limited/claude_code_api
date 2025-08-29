@@ -1,0 +1,206 @@
+{
+  "timestamp": "2025-08-21T18:56:59.076647",
+  "account_id": "7326096_SB1",
+  "suiteql": {
+    "working_tables": [
+      {
+        "table": "customer",
+        "fields": [
+          "altname",
+          "balancesearch",
+          "companyname",
+          "creditholdoverride",
+          "currency",
+          "custentity_2663_customer_refund",
+          "custentity_2663_direct_debit",
+          "custentity_alf_customer_hide_total_vat",
+          "custentity_atlas_high_impact",
+          "custentity_naw_trans_need_approval"
+        ],
+        "field_count": 53
+      },
+      {
+        "table": "vendor",
+        "fields": [
+          "altname",
+          "balance",
+          "balanceprimary",
+          "currency",
+          "datecreated",
+          "duplicate",
+          "emailpreference",
+          "emailtransactions",
+          "entityid",
+          "entitytitle"
+        ],
+        "field_count": 25
+      },
+      {
+        "table": "item",
+        "fields": [
+          "autoleadtime",
+          "autopreferredstocklevel",
+          "autoreorderpoint",
+          "averagecost",
+          "copydescription",
+          "costestimatetype",
+          "createddate",
+          "custitem_alf_print_item_name",
+          "custitem_gpc_sustainable",
+          "custitem_pwks_auto_fulfill_item"
+        ],
+        "field_count": 50
+      },
+      {
+        "table": "location",
+        "fields": [
+          "autoassignmentregionsetting",
+          "externalid",
+          "fullname",
+          "geolocationmethod",
+          "id",
+          "includeincontroltower",
+          "isinactive",
+          "lastmodifieddate",
+          "locationtype",
+          "mainaddress"
+        ],
+        "field_count": 17
+      },
+      {
+        "table": "subsidiary",
+        "fields": [
+          "country",
+          "currency",
+          "custrecord_alf_mark_copy_or_duplicate",
+          "custrecord_alf_sub_enable_cominv",
+          "custrecord_alf_sub_hide_service_periods",
+          "custrecord_alf_sub_hide_total_vat",
+          "custrecord_alf_sub_lock_invoice",
+          "custrecord_alf_sub_logo_height",
+          "custrecord_alf_sub_logo_width",
+          "custrecord_alf_sub_note_no_pay_dis"
+        ],
+        "field_count": 31
+      },
+      {
+        "table": "department",
+        "fields": [
+          "fullname",
+          "id",
+          "includechildren",
+          "isinactive",
+          "lastmodifieddate",
+          "name",
+          "subsidiary"
+        ],
+        "field_count": 7
+      },
+      {
+        "table": "account",
+        "fields": [
+          "accountsearchdisplayname",
+          "accountsearchdisplaynamecopy",
+          "accttype",
+          "cashflowrate",
+          "displaynamewithhierarchy",
+          "eliminate",
+          "fullname",
+          "generalrate",
+          "id",
+          "includechildren"
+        ],
+        "field_count": 17
+      },
+      {
+        "table": "currency",
+        "fields": [
+          "currencyprecision",
+          "displaysymbol",
+          "exchangerate",
+          "id",
+          "includeinfxrateupdates",
+          "isanchorcurrency",
+          "isbasecurrency",
+          "isinactive",
+          "lastmodifieddate",
+          "name"
+        ],
+        "field_count": 13
+      }
+    ],
+    "failed_tables": [
+      "transactionanalyticsbyuser",
+      "itemanalyticsbyperiod",
+      "customeranalyticsbyperiod",
+      "systemnote",
+      "usereventlog",
+      "customrecord"
+    ],
+    "permission_errors": [],
+    "not_found_errors": [
+      "employee",
+      "transaction",
+      "transactionline",
+      "transactionaccountingline",
+      "salesorder",
+      "invoice",
+      "purchaseorder",
+      "cashsale",
+      "creditmemo",
+      "loginaudit",
+      "customlist"
+    ]
+  },
+  "rest_api": {
+    "accessible": [
+      "customer",
+      "vendor",
+      "inventoryitem",
+      "location",
+      "subsidiary",
+      "department"
+    ],
+    "forbidden": [],
+    "not_found": [
+      "item"
+    ]
+  },
+  "recommendations": [
+    {
+      "priority": "MEDIUM",
+      "issue": "Tables Not Available in SuiteQL",
+      "tables_affected": [
+        "employee",
+        "transaction",
+        "transactionline",
+        "transactionaccountingline",
+        "salesorder",
+        "invoice",
+        "purchaseorder",
+        "cashsale",
+        "creditmemo",
+        "loginaudit",
+        "customlist"
+      ],
+      "solution": "These tables may need different access methods",
+      "alternatives": [
+        "Use REST API endpoints instead",
+        "Access via Saved Searches",
+        "Use SuiteTalk SOAP API",
+        "Enable SuiteAnalytics Connect"
+      ]
+    },
+    {
+      "priority": "HIGH",
+      "issue": "Transaction Table Not Accessible",
+      "solution": "Transaction data is critical for most integrations",
+      "actions": [
+        "Enable \"SuiteAnalytics Connect\" feature in NetSuite",
+        "Grant \"Reports > SuiteAnalytics Workbook\" permission",
+        "Consider using transaction record type specific tables",
+        "Use REST API for specific transaction types instead"
+      ]
+    }
+  ]
+}
