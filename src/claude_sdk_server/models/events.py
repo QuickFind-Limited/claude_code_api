@@ -243,6 +243,7 @@ class AssistantMessageEvent(BaseEvent):
     has_text: bool = Field(False, description="Whether message contains text")
     has_thinking: bool = Field(False, description="Whether message contains thinking")
     has_tools: bool = Field(False, description="Whether message contains tool usage")
+    full_content: Optional[str] = Field(None, description="Complete assistant message content")
 
 
 class PerformanceMetricEvent(BaseEvent):

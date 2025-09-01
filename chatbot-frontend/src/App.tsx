@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Message, ModelType, EventLog, ChatSession } from './types';
-import './App.css';
+import React, { useEffect, useRef, useState } from "react";
+import "./App.css";
+import { ChatSession, EventLog, Message, ModelType } from "./types";
+
+// API Base URL constant
+const API_BASE_URL = "http://localhost:8000";
 
 // Create a simple event emitter for real-time updates
 class EventEmitter extends EventTarget {
@@ -13,16 +16,17 @@ const eventBus = new EventEmitter();
 
 const App: React.FC = () => {
   const [session, setSession] = useState<ChatSession>({
-    model: 'claude-sonnet-4-20250514',
-    messages: []
+    model: "claude-sonnet-4-20250514",
+    messages: [],
+    systemPrompt: "",
   });
-  
-  const [inputMessage, setInputMessage] = useState('');
+
+  const [inputMessage, setInputMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -30,10 +34,10 @@ const App: React.FC = () => {
   }, [session.messages]);
 
   const resetSession = () => {
-    setSession(prev => ({
+    setSession((prev) => ({
       ...prev,
       sessionId: undefined,
-      messages: []
+      messages: [],
     }));
   };
 
@@ -42,43 +46,46 @@ const App: React.FC = () => {
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      type: 'user',
+      type: "user",
       content: inputMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     const assistantMessageId = (Date.now() + 1).toString();
     const assistantMessage: Message = {
       id: assistantMessageId,
-      type: 'assistant',
-      content: '',
+      type: "assistant",
+      content: "",
       timestamp: new Date(),
       events: [],
-      isStreaming: true
+      isStreaming: true,
     };
 
     // Update session with new messages
-    setSession(prev => ({
+    setSession((prev) => ({
       ...prev,
-      messages: [...prev.messages, userMessage, assistantMessage]
+      messages: [...prev.messages, userMessage, assistantMessage],
     }));
 
-    setInputMessage('');
+    setInputMessage("");
     setIsStreaming(true);
 
+    console.log("🎯 STARTING STREAMING REQUEST:", inputMessage);
+
     try {
-      const response = await fetch('/api/v1/query/stream', {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/v1/query/stream`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream',
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
         },
         body: JSON.stringify({
           prompt: inputMessage,
+          system_prompt: session.systemPrompt || undefined,
           model: session.model,
           session_id: session.sessionId,
-          max_turns: 30
-        })
+          max_turns: 30,
+        }),
       });
 
       if (!response.ok) {
@@ -87,71 +94,107 @@ const App: React.FC = () => {
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
+      let buffer = "";
 
       if (reader) {
-        let currentEventType = '';
+        console.log("🌊 STREAM READER STARTED - Listening for events...");
+        let currentEventType = "";
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log("🏁 STREAM COMPLETED");
+              break;
+            }
 
             buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
             for (const line of lines) {
-              if (line.startsWith('event:')) {
+              if (line.startsWith("event:")) {
                 currentEventType = line.slice(6).trim();
-                console.log('Event type:', currentEventType);
-              } else if (line.startsWith('data:')) {
+                console.log("🔥 STREAMING EVENT TYPE:", currentEventType);
+              } else if (line.startsWith("data:")) {
                 try {
                   const data = JSON.parse(line.slice(5).trim());
-                  console.log(`SSE ${currentEventType}:`, data);
-                  
-                  if (currentEventType === 'connection') {
-                    console.log('Connected:', data.client_id);
-                  } else if (currentEventType === 'response') {
+                  console.log(`🚀 STREAMING DATA [${currentEventType}]:`, data);
+
+                  // Enhanced logging for different event types
+                  if (currentEventType === "log" && data.display) {
+                    console.log("📝 LIVE MESSAGE:", data.display);
+                  }
+
+                  if (currentEventType === "connection") {
+                    console.log("Connected:", data.client_id);
+                  } else if (currentEventType === "response") {
                     // Final response
-                    setSession(prev => ({
+                    setSession((prev) => ({
                       ...prev,
                       sessionId: data.session_id,
-                      messages: prev.messages.map(msg => 
-                        msg.id === assistantMessageId 
-                          ? { ...msg, content: data.response, isStreaming: false }
+                      messages: prev.messages.map((msg) =>
+                        msg.id === assistantMessageId
+                          ? {
+                              ...msg,
+                              content: data.response,
+                              isStreaming: false,
+                            }
                           : msg
-                      )
+                      ),
                     }));
-                  } else if (currentEventType === 'complete') {
+                  } else if (currentEventType === "complete") {
                     setIsStreaming(false);
-                  } else if (currentEventType === 'error') {
-                    setSession(prev => ({
+                  } else if (currentEventType === "error") {
+                    setSession((prev) => ({
                       ...prev,
-                      messages: prev.messages.map(msg => 
-                        msg.id === assistantMessageId 
-                          ? { ...msg, content: `Error: ${data.error}`, isStreaming: false }
+                      messages: prev.messages.map((msg) =>
+                        msg.id === assistantMessageId
+                          ? {
+                              ...msg,
+                              content: `Error: ${data.error}`,
+                              isStreaming: false,
+                            }
                           : msg
-                      )
+                      ),
                     }));
                     setIsStreaming(false);
-                  } else if (currentEventType === 'log' && data.display) {
+                  } else if (currentEventType === "log" && data.display) {
+                    // Handle assistant_message events with full_content
+                    if (data.type === "assistant_message" && data.full_content) {
+                      console.log("🔵 ASSISTANT MESSAGE WITH FULL CONTENT:", data.full_content);
+                      // Update the assistant message content immediately
+                      setSession((prev) => ({
+                        ...prev,
+                        messages: prev.messages.map((msg) =>
+                          msg.id === assistantMessageId
+                            ? {
+                                ...msg,
+                                content: data.full_content,
+                                isStreaming: true, // Keep streaming state until complete event
+                              }
+                            : msg
+                        ),
+                      }));
+                    }
+
                     // Emit event for real-time update
                     const event: EventLog = {
                       id: Date.now().toString() + Math.random(),
                       type: data.type,
                       display: data.display,
                       timestamp: data.timestamp || new Date().toISOString(),
-                      details: data.details
+                      details: data.details,
+                      full_content: data.full_content, // Include full_content in event
                     };
-                    
-                    console.log('Emitting event:', event.display);
+
+                    console.log("Emitting event:", event.display);
                     eventBus.emit(`message-event-${assistantMessageId}`, event);
                   }
                 } catch (e) {
-                  console.error('Parse error:', e);
+                  console.error("Parse error:", e);
                 }
-              } else if (line.trim() === '') {
-                currentEventType = '';
+              } else if (line.trim() === "") {
+                currentEventType = "";
               }
             }
           }
@@ -160,21 +203,25 @@ const App: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Stream error:', error);
-      setSession(prev => ({
+      console.error("Stream error:", error);
+      setSession((prev) => ({
         ...prev,
-        messages: prev.messages.map(msg => 
-          msg.id === assistantMessageId 
-            ? { ...msg, content: `Connection error: ${error}`, isStreaming: false }
+        messages: prev.messages.map((msg) =>
+          msg.id === assistantMessageId
+            ? {
+                ...msg,
+                content: `Connection error: ${error}`,
+                isStreaming: false,
+              }
             : msg
-        )
+        ),
       }));
       setIsStreaming(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -190,14 +237,23 @@ const App: React.FC = () => {
             <select
               id="model"
               value={session.model}
-              onChange={(e) => setSession(prev => ({ ...prev, model: e.target.value as ModelType }))}
+              onChange={(e) =>
+                setSession((prev) => ({
+                  ...prev,
+                  model: e.target.value as ModelType,
+                }))
+              }
               disabled={isStreaming}
             >
               <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
               <option value="claude-opus-4-1-20250805">Claude Opus 4</option>
             </select>
           </div>
-          <button onClick={resetSession} disabled={isStreaming} className="reset-btn">
+          <button
+            onClick={resetSession}
+            disabled={isStreaming}
+            className="reset-btn"
+          >
             🔄 New Session
           </button>
         </div>
@@ -213,6 +269,16 @@ const App: React.FC = () => {
       </div>
 
       <div className="input-container">
+        <div className="system-prompt-wrapper">
+          <textarea
+            value={session.systemPrompt}
+            onChange={(e) => setSession(prev => ({ ...prev, systemPrompt: e.target.value }))}
+            placeholder="System prompt (optional)..."
+            disabled={isStreaming}
+            rows={2}
+            className="system-prompt"
+          />
+        </div>
         <div className="input-wrapper">
           <textarea
             value={inputMessage}
@@ -222,8 +288,11 @@ const App: React.FC = () => {
             disabled={isStreaming}
             rows={3}
           />
-          <button onClick={sendMessage} disabled={!inputMessage.trim() || isStreaming}>
-            {isStreaming ? '⏳' : '📨'}
+          <button
+            onClick={sendMessage}
+            disabled={!inputMessage.trim() || isStreaming}
+          >
+            {isStreaming ? "⏳" : "📨"}
           </button>
         </div>
       </div>
@@ -238,71 +307,85 @@ const App: React.FC = () => {
 };
 
 // Separate component that manages its own events state
-const RealtimeMessageComponent: React.FC<{ message: Message }> = ({ message }) => {
+const RealtimeMessageComponent: React.FC<{ message: Message }> = ({
+  message,
+}) => {
   const [events, setEvents] = useState<EventLog[]>(message.events || []);
   const [eventsExpanded, setEventsExpanded] = useState(true);
-  
+
   // Listen for events via event bus
   useEffect(() => {
-    if (message.type === 'assistant') {
+    if (message.type === "assistant") {
       const handleEvent = (e: CustomEvent) => {
         const newEvent = e.detail as EventLog;
-        console.log('Received event in component:', newEvent.display);
-        setEvents(prev => [...prev, newEvent]);
+        console.log("🎉 COMPONENT RECEIVED EVENT:", newEvent.display);
+        console.log("🔍 Event details:", newEvent);
+        setEvents((prev) => [...prev, newEvent]);
       };
-      
+
       const eventName = `message-event-${message.id}`;
       eventBus.addEventListener(eventName, handleEvent as EventListener);
-      
+
       return () => {
         eventBus.removeEventListener(eventName, handleEvent as EventListener);
       };
     }
   }, [message.id, message.type]);
-  
+
   // Auto-expand for streaming messages
   useEffect(() => {
     if (message.isStreaming && events.length > 0) {
       setEventsExpanded(true);
     }
   }, [message.isStreaming, events]);
-  
+
   return (
     <div className={`message ${message.type}`}>
       <div className="message-header">
         <span className="message-type">
-          {message.type === 'user' ? '👤 You' : '🤖 Claude'}
+          {message.type === "user" ? "👤 You" : "🤖 Claude"}
         </span>
         <span className="message-time">
           {message.timestamp.toLocaleTimeString()}
         </span>
       </div>
-      
+
       <div className="message-content">
         {/* Show events real-time */}
         {events.length > 0 && (
           <div className="events-section">
-            <button 
+            <button
               className="events-toggle"
               onClick={() => setEventsExpanded(!eventsExpanded)}
             >
-              {eventsExpanded ? '▼' : '▶'} Live Events ({events.length})
-              {message.isStreaming && <span className="streaming-badge"> • LIVE</span>}
+              {eventsExpanded ? "▼" : "▶"} Live Events ({events.length})
+              {message.isStreaming && (
+                <span className="streaming-badge"> • LIVE</span>
+              )}
             </button>
-            
+
             {eventsExpanded && (
               <div className="events-list">
                 {[...events].reverse().map((event) => (
                   <div key={event.id} className="event-item event-item-live">
                     <div className="event-display">{event.display}</div>
+                    {event.full_content && (
+                      <div className="full-content">
+                        <strong>Assistant Response:</strong>
+                        <pre className="assistant-full-content">{event.full_content}</pre>
+                      </div>
+                    )}
                     {event.details && (
                       <div className="event-details">
-                        {typeof event.details === 'object' 
-                          ? Object.entries(event.details).map(([key, value]) => (
-                              <span key={key}>{key}: {String(value)} </span>
-                            ))
-                          : String(event.details)
-                        }
+                        {typeof event.details === "object"
+                          ? Object.entries(event.details).map(
+                              ([key, value]) => (
+                                <span key={key}>
+                                  {key}: {String(value)}{" "}
+                                </span>
+                              )
+                            )
+                          : String(event.details)}
                       </div>
                     )}
                     <div className="event-time">
@@ -314,7 +397,7 @@ const RealtimeMessageComponent: React.FC<{ message: Message }> = ({ message }) =
             )}
           </div>
         )}
-        
+
         {/* Show content or thinking indicator */}
         {message.isStreaming && !message.content ? (
           <div className="streaming-indicator">

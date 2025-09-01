@@ -188,6 +188,10 @@ async def format_event_for_sse_dict(event) -> dict:
             "has_thinking": getattr(event, "has_thinking", False),
             "has_tools": getattr(event, "has_tools", False),
         }
+        # Include full content for frontend display
+        full_content = getattr(event, "full_content", None)
+        if full_content:
+            formatted_data["full_content"] = full_content
     elif event_type == "query_complete":
         duration = getattr(event, "duration_seconds", 0)
         formatted_data["display"] = f"✅ Complete: Query processed in {duration:.2f}s"

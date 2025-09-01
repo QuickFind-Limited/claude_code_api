@@ -15,10 +15,12 @@ export interface EventLog {
   display: string;
   timestamp: string;
   details?: any;
+  full_content?: string; // Assistant message full content
 }
 
 export interface ChatSession {
   sessionId?: string;
   model: ModelType;
   messages: Message[];
+  systemPrompt?: string;
 }

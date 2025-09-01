@@ -9,6 +9,9 @@ class QueryRequest(BaseModel):
     """Request model for Claude queries."""
 
     prompt: str = Field(..., min_length=1, description="The prompt to send to Claude")
+    system_prompt: Optional[str] = Field(
+        None, description="System prompt to set context for Claude"
+    )
     session_id: Optional[str] = Field(
         None, description="Session ID to resume a conversation"
     )

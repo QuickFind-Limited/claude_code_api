@@ -126,10 +126,8 @@ async def query_claude_stream(
                 try:
                     while client.is_active:
                         try:
-                            # Get event with very short timeout for immediate streaming
-                            event = await asyncio.wait_for(
-                                client.get_event(timeout=0.01), timeout=0.05
-                            )
+                            # Get event immediately without timeout
+                            event = await client.get_event(timeout=0.001)
                             if (
                                 event
                                 and hasattr(event, "id")
@@ -141,8 +139,8 @@ async def query_claude_stream(
                                     # Put event in queue immediately
                                     await event_queue.put(formatted_event)
                         except asyncio.TimeoutError:
-                            # No event available, continue immediately
-                            await asyncio.sleep(0.001)  # Minimal sleep
+                            # No event available, yield immediately to prevent batching
+                            await asyncio.sleep(0)  # Yield control immediately
                         except Exception as e:
                             if client.is_active:
                                 print(f"Event error: {e}")
@@ -158,20 +156,14 @@ async def query_claude_stream(
 
             while not query_task.done() or not event_queue.empty():
                 try:
-                    # Get event with very short timeout to check query status frequently
-                    event = await asyncio.wait_for(event_queue.get(), timeout=0.001)
+                    # Wait for event without timeout to prevent batching
+                    event = await event_queue.get()
                     # Event is already a dict from format_event_for_sse
                     yield event
                     last_yield_time = asyncio.get_event_loop().time()
-                except asyncio.TimeoutError:
-                    # Send keep-alive every 100ms to prevent buffering
-                    current_time = asyncio.get_event_loop().time()
-                    if current_time - last_yield_time > 0.1:
-                        # Send keepalive as comment dict for sse-starlette
-                        yield {"comment": "keepalive"}
-                        last_yield_time = current_time
-                    # No event available, continue checking
-                    await asyncio.sleep(0.0001)  # Even shorter sleep
+                except Exception as e:
+                    print(f"Event streaming error: {e}")
+                    break
 
             # Query is done, get result
             try:
@@ -286,6 +278,10 @@ async def format_event_for_sse(event) -> str:
             "has_thinking": getattr(event, "has_thinking", False),
             "has_tools": getattr(event, "has_tools", False),
         }
+        # Include full content for frontend display
+        full_content = getattr(event, "full_content", None)
+        if full_content:
+            formatted_data["full_content"] = full_content
 
     elif event_type == "query_complete":
         duration = getattr(event, "duration_seconds", 0)

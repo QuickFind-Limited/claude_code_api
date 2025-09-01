@@ -39,6 +39,7 @@ help:
 	@echo ""
 	@echo "$(YELLOW)Frontend Commands:$(NC)"
 	@echo "  make frontend    - Start the frontend dashboard"
+	@echo "  make frontend-3002 - Start React frontend on port 3002"
 	@echo "  make open-frontend - Open dashboard in browser"
 	@echo "  make start-all   - Start backend and frontend together"
 
@@ -169,6 +170,12 @@ chatbot:
 	@sleep 1
 	@echo "$(GREEN)✅ Chatbot available at http://localhost:3001/chatbot.html$(NC)"
 	@open http://localhost:3001/chatbot.html || xdg-open http://localhost:3001/chatbot.html || echo "Please open http://localhost:3001/chatbot.html in your browser"
+
+# Start React frontend on port 3002
+frontend-3002:
+	@echo "$(GREEN)Starting React frontend on port 3002...$(NC)"
+	@cd chatbot-frontend && npm start -- --port 3002
+	@echo "$(GREEN)✅ React frontend available at http://localhost:3002$(NC)"
 
 # Start both backend and frontend
 start-all: up
