@@ -292,7 +292,7 @@ const RealtimeMessageComponent: React.FC<{ message: Message }> = ({ message }) =
             
             {eventsExpanded && (
               <div className="events-list">
-                {[...events].reverse().map((event) => (
+                {events.map((event) => (
                   <div key={event.id} className="event-item event-item-live">
                     <div className="event-display">{event.display}</div>
                     {event.details && (

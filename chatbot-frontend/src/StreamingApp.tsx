@@ -300,7 +300,7 @@ const MessageComponent: React.FC<{ message: Message }> = ({ message }) => {
             
             {eventsExpanded && (
               <div className="events-list">
-                {[...message.events].reverse().map((event) => (
+                {message.events.map((event) => (
                   <div key={event.id} className="event-item event-item-live">
                     <div className="event-display">{event.display}</div>
                     {event.details && (
