@@ -7,6 +7,9 @@ services:
     container_name: claude-sdk-server
     ports:
       - "${PORT:-8000}:8000"
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
     env_file:
       - .env
     restart: unless-stopped

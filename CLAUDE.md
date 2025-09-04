@@ -10,6 +10,26 @@
 - A .env.example file should be provided for reference and any new secrets should be added to it
 - The implementation should use the dotenv (or similar) library to load environment variables from .env files
 - Variables should also be loaded from the environment
+
+## File Organization
+
+The API automatically enhances the system prompt to include file organization instructions:
+
+- **Temporary files**: `tmp/{conversationId}/utils/` - For intermediate results and working files
+- **Response attachments**: `tmp/{conversationId}/attachments/` - For files that should be provided to the user
+
+### File Change Tracking
+
+The API automatically tracks file changes in the attachments directory:
+
+- **Before/After Comparison**: Captures file state before and after each Claude query
+- **Change Detection**: Identifies new files and updated files based on modification timestamps
+- **Response Enhancement**: Returns file information in the QueryResponse including:
+  - `attachments`: List of all files with metadata (FileInfo objects)
+  - `new_files`: List of newly created file paths
+  - `updated_files`: List of modified file paths
+
+This ensures consistent file organization across all Claude interactions and provides visibility into file changes made during each request.
 **Core Principle**: We need to intelligently decide when to fail hard and fast to quickly address issues, and when to allow processes to complete in critical services despite failures. Read below carefully and make intelligent decisions on a case-by-case basis.
 #### When to Fail Fast and Loud (Let it Crash!)
 

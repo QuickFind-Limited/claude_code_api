@@ -1,9 +1,12 @@
 """Claude service implementation with bulletproof message processing."""
 
+import os
 import re
 import time
 import uuid
 import traceback
+from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from claude_code_sdk import (
@@ -14,7 +17,7 @@ from claude_code_sdk import (
     query,
 )
 
-from src.claude_sdk_server.models.dto import QueryRequest, QueryResponse
+from src.claude_sdk_server.models.dto import FileInfo, QueryRequest, QueryResponse
 from src.claude_sdk_server.streaming import (
     AssistantMessageEvent,
     DecisionMadeEvent,
@@ -75,6 +78,11 @@ class ClaudeService:
     async def query(self, request: QueryRequest) -> QueryResponse:
         """Send a query to Claude using the SDK query function with bulletproof processing."""
         start_time = time.time()
+        query_start_datetime = datetime.now()
+        
+        # Capture initial file state
+        conversation_id = request.session_id or "default"
+        initial_file_state = self._capture_attachments_state(conversation_id)
 
         # Emit query start event with fallback
         try:
@@ -112,13 +120,18 @@ class ClaudeService:
         except Exception as e:
             logger.error(f"Failed to log query start: {e}")
 
+        # Enhance system prompt with file organization instructions
+        enhanced_system_prompt = self._build_enhanced_system_prompt(
+            request.system_prompt, request.session_id
+        )
+        
         options = ClaudeCodeOptions(
             resume=request.session_id,
             max_turns=request.max_turns,
             permission_mode="bypassPermissions",
             model=request.model,
             max_thinking_tokens=request.max_thinking_tokens,
-            system_prompt=request.system_prompt,
+            system_prompt=enhanced_system_prompt,
         )
 
         # Initialize tracking variables
@@ -196,6 +209,10 @@ class ClaudeService:
         # Ensure we have a response and session ID
         response_text = response_text or "No response received from Claude"
         current_session_id = current_session_id or str(uuid.uuid4())
+        
+        # Capture final file state and detect changes
+        final_file_state = self._capture_attachments_state(conversation_id)
+        file_changes = self._detect_file_changes(initial_file_state, final_file_state, conversation_id, query_start_datetime)
 
         # Emit completion event if successful
         if response_text and not response_text.startswith("Error processing query:"):
@@ -215,7 +232,13 @@ class ClaudeService:
             logger.warning(f"Processing completed with {self._formatting_errors} formatting errors "
                          f"and {self._raw_messages_sent} raw message fallbacks")
 
-        return QueryResponse(response=response_text, session_id=current_session_id)
+        return QueryResponse(
+            response=response_text, 
+            session_id=current_session_id,
+            attachments=file_changes["attachments"],
+            new_files=file_changes["new_files"],
+            updated_files=file_changes["updated_files"]
+        )
 
     async def _extract_basic_content(self, message: Any, all_assistant_messages: List[str]):
         """Extract basic content from message even if advanced processing fails."""
@@ -1145,6 +1168,165 @@ class ClaudeService:
             self._reset_state()
         except Exception as e:
             logger.error(f"Failed to reset state: {e}")
+
+    def _build_enhanced_system_prompt(self, original_prompt: Optional[str], session_id: Optional[str]) -> str:
+        """Build enhanced system prompt with file organization instructions."""
+        try:
+            conversation_id = session_id or "default"
+            
+            file_organization_instructions = f"""
+
+## CRITICAL File Organization Instructions
+
+IMPORTANT: When working with files during this conversation, you MUST use these EXACT paths:
+
+- **Temporary files**: ALL temporary files, intermediate results, or working files MUST be stored in: `tmp/{conversation_id}/utils/`
+- **Response attachments**: ALL files that should be provided to the user MUST be stored in: `tmp/{conversation_id}/attachments/`
+
+NEVER use absolute paths like `/app/` or `/tmp/`. ALWAYS use the relative paths specified above.
+
+Examples of CORRECT usage:
+- Write("tmp/{conversation_id}/attachments/report.pdf", content)
+- Write("tmp/{conversation_id}/utils/temp_data.json", content)
+
+These directories will be created automatically. You MUST follow this structure strictly.
+"""
+            
+            if original_prompt:
+                return original_prompt + file_organization_instructions
+            else:
+                return f"You are a helpful AI assistant.{file_organization_instructions}"
+                
+        except Exception as e:
+            logger.error(f"Failed to build enhanced system prompt: {e}")
+            # Fallback to original prompt or default
+            return original_prompt or "You are a helpful AI assistant."
+
+    def _capture_attachments_state(self, conversation_id: str) -> Dict[str, Dict[str, Any]]:
+        """Capture the current state of files in the attachments directory."""
+        try:
+            attachments_dir = Path(f"./tmp/{conversation_id}/attachments")
+            file_state = {}
+            
+            if attachments_dir.exists() and attachments_dir.is_dir():
+                for file_path in attachments_dir.rglob("*"):
+                    if file_path.is_file():
+                        try:
+                            stat = file_path.stat()
+                            relative_path = str(file_path.relative_to(attachments_dir))
+                            file_state[relative_path] = {
+                                "size": stat.st_size,
+                                "modified": datetime.fromtimestamp(stat.st_mtime),
+                                "absolute_path": str(file_path)
+                            }
+                        except Exception as e:
+                            logger.error(f"Failed to get stats for {file_path}: {e}")
+            
+            return file_state
+        except Exception as e:
+            logger.error(f"Failed to capture attachments state: {e}")
+            return {}
+
+    def _detect_file_changes(self, before: Dict[str, Dict[str, Any]], after: Dict[str, Dict[str, Any]], conversation_id: str, query_start_time: datetime) -> Dict[str, Any]:
+        """Detect file changes between before and after states."""
+        try:
+            new_files = []
+            updated_files = []
+            attachments = []
+            
+            # Find new and updated files based on query start time
+            for file_path, file_info in after.items():
+                file_modified_time = file_info["modified"]
+                
+                # Check if file was created or modified during this query
+                if file_modified_time >= query_start_time:
+                    if file_path not in before:
+                        # New file created during query
+                        new_files.append(file_info["absolute_path"])
+                        attachments.append(FileInfo(
+                            path=file_path,
+                            absolute_path=file_info["absolute_path"],
+                            size=file_info["size"],
+                            modified=file_info["modified"],
+                            is_new=True,
+                            is_updated=False
+                        ))
+                    else:
+                        # Existing file modified during query
+                        updated_files.append(file_info["absolute_path"])
+                        attachments.append(FileInfo(
+                            path=file_path,
+                            absolute_path=file_info["absolute_path"],
+                            size=file_info["size"],
+                            modified=file_info["modified"],
+                            is_new=False,
+                            is_updated=True
+                        ))
+                else:
+                    # File exists but wasn't modified during query
+                    attachments.append(FileInfo(
+                        path=file_path,
+                        absolute_path=file_info["absolute_path"],
+                        size=file_info["size"],
+                        modified=file_info["modified"],
+                        is_new=False,
+                        is_updated=False
+                    ))
+            
+            # Log detected changes with detailed differences
+            if new_files or updated_files:
+                logger.info("\n" + "=" * 60)
+                self._safe_log_user_friendly("📁", "File Changes", f"{len(new_files)} nouveaux, {len(updated_files)} modifiés")
+                logger.info("=" * 60)
+                self._safe_log_indented("Query Start", query_start_time.strftime('%H:%M:%S.%f')[:-3])
+                
+                for file_path in new_files:
+                    self._safe_log_indented("Nouveau", file_path)
+                    try:
+                        relative_path = Path(file_path).relative_to(Path(f"./tmp/{conversation_id}/attachments"))
+                        file_info = after[str(relative_path)]
+                        file_size = file_info["size"]
+                        created_time = file_info["modified"]
+                        time_diff = (created_time - query_start_time).total_seconds()
+                        self._safe_log_indented("", f"   Taille: {file_size} octets")
+                        self._safe_log_indented("", f"   Créé: {created_time.strftime('%H:%M:%S.%f')[:-3]} (+{time_diff:.2f}s)")
+                    except Exception as e:
+                        logger.debug(f"Failed to log new file details: {e}")
+                
+                for file_path in updated_files:
+                    self._safe_log_indented("Modifié", file_path)
+                    try:
+                        relative_path = Path(file_path).relative_to(Path(f"./tmp/{conversation_id}/attachments"))
+                        old_info = before.get(str(relative_path))
+                        new_info = after[str(relative_path)]
+                        
+                        if old_info:
+                            old_size = old_info["size"]
+                            new_size = new_info["size"]
+                            size_diff = new_size - old_size
+                            size_change = f"+{size_diff}" if size_diff > 0 else str(size_diff)
+                            self._safe_log_indented("", f"   Taille: {old_size} → {new_size} ({size_change} octets)")
+                        else:
+                            self._safe_log_indented("", f"   Taille: {new_info['size']} octets")
+                        
+                        modified_time = new_info["modified"]
+                        time_diff = (modified_time - query_start_time).total_seconds()
+                        self._safe_log_indented("", f"   Modifié: {modified_time.strftime('%H:%M:%S.%f')[:-3]} (+{time_diff:.2f}s)")
+                    except Exception as e:
+                        logger.debug(f"Failed to log updated file details: {e}")
+                
+                logger.info("=" * 60)
+            else:
+                logger.info("📁 Aucun fichier modifié dans le dossier attachments")
+            
+            return {
+                "attachments": attachments,
+                "new_files": new_files,
+                "updated_files": updated_files
+            }
+        except Exception as e:
+            logger.error(f"Failed to detect file changes: {e}")
+            return {"attachments": [], "new_files": [], "updated_files": []}
 
     def _reset_state(self) -> None:
         """Reset internal state for the next query."""

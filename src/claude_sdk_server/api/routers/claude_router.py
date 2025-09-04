@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from datetime import datetime
 from typing import AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -40,6 +41,13 @@ except ImportError:
 
 
 router = APIRouter(prefix="/api/v1", tags=["claude"])
+
+
+def json_serializer(obj):
+    """Custom JSON serializer for datetime objects."""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
 @router.post("/query")
@@ -101,7 +109,7 @@ async def query_claude_stream(
             # Send initial event as dict for sse-starlette
             yield {
                 "event": "connection",
-                "data": json.dumps({"status": "connected", "client_id": client_id}),
+                "data": json.dumps({"status": "connected", "client_id": client_id}, default=json_serializer),
             }
 
             # Small delay to ensure SSE connection is fully established
@@ -180,28 +188,43 @@ async def query_claude_stream(
                         if event_queue.empty():
                             await asyncio.sleep(0.01)
 
-                # Send final response event as dict
+                # Send final response event as dict with file changes
                 yield {
                     "event": "response",
                     "data": json.dumps(
                         {
                             "response": response.response,
                             "session_id": response.session_id,
-                        }
+                            "attachments": [attachment.model_dump() for attachment in response.attachments],
+                            "new_files": response.new_files,
+                            "updated_files": response.updated_files,
+                            "file_changes_summary": {
+                                "total_files": len(response.attachments),
+                                "new_count": len(response.new_files),
+                                "updated_count": len(response.updated_files)
+                            }
+                        },
+                        default=json_serializer
                     ),
                 }
 
-                # Send completion event as dict
+                # Send completion event as dict with file summary
                 yield {
                     "event": "complete",
                     "data": json.dumps(
-                        {"status": "completed", "session_id": response.session_id}
+                        {
+                            "status": "completed", 
+                            "session_id": response.session_id,
+                            "files_changed": len(response.new_files) + len(response.updated_files) > 0,
+                            "summary": f"{len(response.new_files)} nouveaux fichiers, {len(response.updated_files)} modifiés"
+                        },
+                        default=json_serializer
                     ),
                 }
 
             except Exception as e:
                 # Send error event as dict
-                yield {"event": "error", "data": json.dumps({"error": str(e)})}
+                yield {"event": "error", "data": json.dumps({"error": str(e)}, default=json_serializer)}
 
             # Cleanup event stream task
             if event_stream_task and not event_stream_task.done():
@@ -301,7 +324,7 @@ async def format_event_for_sse(event) -> str:
         formatted_data["data"] = event.data
 
     # Return as dict for sse-starlette
-    return {"event": "log", "data": json.dumps(formatted_data)}
+    return {"event": "log", "data": json.dumps(formatted_data, default=json_serializer)}
 
 
 @router.get("/health")

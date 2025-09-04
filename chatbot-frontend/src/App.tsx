@@ -128,7 +128,14 @@ const App: React.FC = () => {
                   if (currentEventType === "connection") {
                     console.log("Connected:", data.client_id);
                   } else if (currentEventType === "response") {
-                    // Final response
+                    // Final response with file changes
+                    console.log("📁 FILES INFO:", {
+                      attachments: data.attachments,
+                      new_files: data.new_files,
+                      updated_files: data.updated_files,
+                      summary: data.file_changes_summary
+                    });
+                    
                     setSession((prev) => ({
                       ...prev,
                       sessionId: data.session_id,
@@ -138,6 +145,12 @@ const App: React.FC = () => {
                               ...msg,
                               content: data.response,
                               isStreaming: false,
+                              fileChanges: {
+                                attachments: data.attachments || [],
+                                new_files: data.new_files || [],
+                                updated_files: data.updated_files || [],
+                                summary: data.file_changes_summary
+                              }
                             }
                           : msg
                       ),
@@ -411,6 +424,55 @@ const RealtimeMessageComponent: React.FC<{ message: Message }> = ({
         ) : message.content ? (
           <pre className="message-text">{message.content}</pre>
         ) : null}
+
+        {/* Show file changes */}
+        {message.fileChanges && (message.fileChanges.new_files.length > 0 || message.fileChanges.updated_files.length > 0) && (
+          <div className="file-changes-section">
+            <h4>📁 Fichiers modifiés</h4>
+            
+            {message.fileChanges.new_files.length > 0 && (
+              <div className="new-files">
+                <strong>🆕 Nouveaux fichiers ({message.fileChanges.new_files.length}):</strong>
+                <ul>
+                  {message.fileChanges.new_files.map((filePath, index) => {
+                    const fileInfo = message.fileChanges?.attachments.find(f => f.absolute_path === filePath);
+                    return (
+                      <li key={index}>
+                        <span className="file-name">{fileInfo?.path || filePath}</span>
+                        {fileInfo && (
+                          <span className="file-details">
+                            ({(fileInfo.size / 1024).toFixed(1)} KB)
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {message.fileChanges.updated_files.length > 0 && (
+              <div className="updated-files">
+                <strong>✏️ Fichiers modifiés ({message.fileChanges.updated_files.length}):</strong>
+                <ul>
+                  {message.fileChanges.updated_files.map((filePath, index) => {
+                    const fileInfo = message.fileChanges?.attachments.find(f => f.absolute_path === filePath);
+                    return (
+                      <li key={index}>
+                        <span className="file-name">{fileInfo?.path || filePath}</span>
+                        {fileInfo && (
+                          <span className="file-details">
+                            ({(fileInfo.size / 1024).toFixed(1)} KB, modifié à {new Date(fileInfo.modified).toLocaleTimeString()})
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

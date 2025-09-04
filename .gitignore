@@ -65,5 +65,6 @@ logs/
 
 # MCP
 .mcp.json
-
+.claude-flow/
+.hive-mind/
 node_modules/
