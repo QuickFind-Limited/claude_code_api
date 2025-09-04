@@ -39,6 +39,7 @@ class EventType(str, Enum):
     # System events
     SYSTEM_MESSAGE = "system_message"
     ASSISTANT_MESSAGE = "assistant_message"
+    USER_MESSAGE = "user_message"
 
     # Performance events
     PERFORMANCE_METRIC = "performance_metric"
@@ -246,6 +247,15 @@ class AssistantMessageEvent(BaseEvent):
     full_content: Optional[str] = Field(None, description="Complete assistant message content")
 
 
+class UserMessageEvent(BaseEvent):
+    """Event fired for user messages."""
+
+    type: Literal[EventType.USER_MESSAGE] = EventType.USER_MESSAGE
+    content_length: int = Field(..., description="Length of user content")
+    word_count: int = Field(..., description="Number of words in user message")
+    full_content: Optional[str] = Field(None, description="Complete user message content")
+
+
 class PerformanceMetricEvent(BaseEvent):
     """Event fired for performance metrics."""
 
@@ -282,6 +292,7 @@ StreamingEvent = Union[
     StepProgressEvent,
     SystemMessageEvent,
     AssistantMessageEvent,
+    UserMessageEvent,
     PerformanceMetricEvent,
     TokenUsageEvent,
 ]
@@ -335,6 +346,7 @@ __all__ = [
     "StepProgressEvent",
     "SystemMessageEvent",
     "AssistantMessageEvent",
+    "UserMessageEvent",
     "PerformanceMetricEvent",
     "TokenUsageEvent",
     "StreamingEvent",

@@ -50,6 +50,7 @@ from ..models.events import (
     ToolErrorEvent,
     ToolResultEvent,
     ToolUseEvent,
+    UserMessageEvent,
 )
 from .event_stream import (
     ClientConnection,
@@ -85,6 +86,7 @@ __all__ = [
     "ThinkingInsightEvent",
     "SystemMessageEvent",
     "AssistantMessageEvent",
+    "UserMessageEvent",
     # Tool events
     "ToolUseEvent",
     "ToolResultEvent",

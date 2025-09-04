@@ -2,7 +2,11 @@
 
 import os
 
+from dotenv import load_dotenv
 import atla_insights
+
+# Load environment variables from .env file
+load_dotenv()
 import logfire
 from atla_insights import instrument_claude_code_sdk
 from fastapi import FastAPI
