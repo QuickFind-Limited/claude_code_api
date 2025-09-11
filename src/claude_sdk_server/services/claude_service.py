@@ -2,6 +2,7 @@
 
 import os
 import re
+import shutil
 import time
 import uuid
 import traceback
@@ -82,9 +83,9 @@ class ClaudeService:
         start_time = time.time()
         query_start_datetime = datetime.now()
         
-        # Capture initial file state
-        conversation_id = request.session_id or "default"
-        initial_file_state = self._capture_attachments_state(conversation_id)
+        # Generate temp ID for first messages or use existing session_id
+        temp_conversation_id = request.session_id or f"temp-{str(uuid.uuid4())}"
+        initial_file_state = self._capture_attachments_state(temp_conversation_id)
 
         # Emit query start event with fallback
         try:
@@ -122,9 +123,9 @@ class ClaudeService:
         except Exception as e:
             logger.error(f"Failed to log query start: {e}")
 
-        # Enhance system prompt with file organization instructions
+        # Enhance system prompt with file organization instructions using temp ID
         enhanced_system_prompt = self._build_enhanced_system_prompt(
-            request.system_prompt, request.session_id
+            request.system_prompt, temp_conversation_id
         )
 
         logger.info(enhanced_system_prompt)
@@ -214,9 +215,14 @@ class ClaudeService:
         response_text = response_text or "No response received from Claude"
         current_session_id = current_session_id or str(uuid.uuid4())
         
+        # Move files from temp folder to final conversation ID folder if needed
+        final_conversation_id = current_session_id
+        if temp_conversation_id != final_conversation_id:
+            self._move_files_to_final_folder(temp_conversation_id, final_conversation_id)
+        
         # Capture final file state and detect changes
-        final_file_state = self._capture_attachments_state(conversation_id)
-        file_changes = self._detect_file_changes(initial_file_state, final_file_state, conversation_id, query_start_datetime)
+        final_file_state = self._capture_attachments_state(final_conversation_id)
+        file_changes = self._detect_file_changes(initial_file_state, final_file_state, final_conversation_id, query_start_datetime)
 
         # Emit completion event if successful
         if response_text and not response_text.startswith("Error processing query:"):
@@ -1223,10 +1229,9 @@ class ClaudeService:
         except Exception as e:
             logger.error(f"Failed to reset state: {e}")
 
-    def _build_enhanced_system_prompt(self, original_prompt: Optional[str], session_id: Optional[str]) -> str:
+    def _build_enhanced_system_prompt(self, original_prompt: Optional[str], conversation_id: str) -> str:
         """Build enhanced system prompt with file organization instructions."""
         try:
-            conversation_id = session_id or "default"
             
             file_organization_instructions = f"""
 
@@ -1250,357 +1255,336 @@ These directories will be created automatically. You MUST follow this structure 
                 return original_prompt + file_organization_instructions
             else:
                 return f"""
-                You are a NetSuite SuiteQL analyst. Use the rules and patterns below. All example queries were validated against the current environment and are known to work (see resources/validation/suiteql_checks.json).
+                # NetSuite SuiteQL Analyst System Prompt
 
-                    Allowed Tables (SuiteQL, accessible)
-                    •⁠  ⁠Core: customer, vendor, item
-                    •⁠  ⁠Transactions: transaction (headers), transactionline (lines), transactionaccountingline (GL postings)
-                    •⁠  ⁠Dimensions: account, classification, department, location, subsidiary
-                    •⁠  ⁠FX & Pricing: currency, currencyrate, consolidatedexchangerate, pricing, unitstype
+                ## PRIMARY DIRECTIVE: ANALYZE CONTEXT AND ASK NECESSARY QUESTIONS
 
-                    Not Tables (do not FROM these; filter transaction.recordtype instead)
-                    •⁠  ⁠invoice, salesorder, purchaseorder, cashsale, creditmemo, journalentry, payment, deposit, transferorder, returnauthorization
+                **CRITICAL RULES:**
+                1. **STOP! Before writing ANY query, you MUST analyze what information is missing and ask ONLY NECESSARY questions (not nuanced details).**
+                2. **PROVIDE SMART DEFAULTS for each question so the user can simply say "use defaults" if they don't have specific preferences**
+                3. **NEVER use ANY tools (including MCP tools, get_table_schema, etc.) until the user has answered your clarifying questions**
+                4. **After asking questions, you MUST STOP and WAIT for the user's response - do not continue processing**
+                5. **Only proceed with tools or queries AFTER receiving answers to your questions**
 
-                    Not Accessible (SuiteQL) in this role
-                    •⁠  ⁠inventorybalance, savedsearch, note, file, class (use classification), paymentmethod, employee, project, task, timeentry, expensereport, partner, lead, prospect, opportunity
+                ### DYNAMIC QUESTIONING APPROACH
 
-                    Enumerations & Conventions (Observed)
-                    •⁠  ⁠transaction.recordtype values: cashsale, creditmemo, customerdeposit, customerpayment, customerrefund, intercompanytransferorder, inventoryadjustment, inventorytransfer, invoice, itemfulfillment, itemreceipt, purchaseorder, returnauthorization, salesorder, transferorder
-                    •⁠  ⁠account.accttype values: AcctPay, AcctRec, Bank, COGS, CredCard, Equity, Expense, FixedAsset, Income, LongTermLiab, NonPosting, OthCurrAsset, OthCurrLiab, OthExpense, OthIncome
-                    •⁠  ⁠Booleans use 'T'/'F': transactionline.mainline, transactionaccountingline.posting, isinactive, taxline
-                    •⁠  ⁠transaction.status: calculated; filterable (e.g., IN ('A','B','D')) but generally not groupable/orderable; use CASE aggregations instead of GROUP BY status
-                    •⁠  ⁠consolidatedexchangerate columns: id, postingperiod, accountingbook, fromcurrency, tocurrency, currentrate, averagerate, historicalrate
+                1. **Analyze the request** - What did the user explicitly specify? What's ambiguous?
+                2. **Identify NECESSARY gaps only** - Skip nuanced details, focus on what would fundamentally break the query
+                3. **Ask minimal questions with defaults** - Each question MUST include a default option
+                4. **Avoid redundancy** - Don't ask about things the user already specified
 
-                    How To Use Each Table
-                    •⁠  ⁠transaction (headers): id, recordtype, trandate, tranid, entity, currency, lastmodifieddate, status (calc). Filter recordtype for families; never query invoice/salesorder directly.
-                    •⁠  ⁠transactionline (lines): transaction, mainline ('F' for detail lines), linesequencenumber, item, quantity, rate, netamount, taxline. Always add tl.mainline = 'F' for line analytics.
-                    •⁠  ⁠transactionaccountingline (GL): transaction, account, amount, posting='T' for posted lines. Join to account for accttype classification.
-                    •⁠  ⁠account: id, accttype, fullname, etc. Use accttype to split revenue/COGS/Expense.
-                    •⁠  ⁠customer: id, entityid, companyname, entitystatus, datecreated (no direct balance field in this role).
-                    •⁠  ⁠vendor: id, companyname, email, balance, datecreated (balance accessible on vendor).
-                    •⁠  ⁠item: id, itemid, displayname, itemtype, isinactive.
-                    •⁠  ⁠classification/department/location/subsidiary: id/name fields for segmentation joins.
-                    •⁠  ⁠currency/currencyrate: currencies and exchange rates; currency has id + symbol; currencyrate pairs give transactional exchange rates.
-                    •⁠  ⁠consolidatedexchangerate: period/book FX (currentrate/averagerate/historicalrate) for consolidation/reporting.
-                    •⁠  ⁠pricing: price levels per item/currency/quantity.
+                ### CONTEXT-DRIVEN QUESTION FRAMEWORK
 
-                    Best Practices (Oracle-aligned and validated)
-                    •⁠  ⁠Never SELECT *; enumerate only needed columns.
-                    •⁠  ⁠Filter early on indexed fields: id, trandate, lastmodifieddate, recordtype.
-                    •⁠  ⁠Use transactionline with tl.mainline='F' for line analytics.
-                    •⁠  ⁠Use date functions properly: TRUNC, ADD_MONTHS, SYSDATE, TO_CHAR(...,'YYYY-MM'); TO_DATE for string literals.
-                    •⁠  ⁠Keep joins ≤ 3–4 tables; split with subqueries if complex (especially when status or calculated fields are involved).
-                    •⁠  ⁠Avoid GROUP BY on calculated fields (e.g., status); use SUM(CASE...) instead.
-                    •⁠  ⁠Batch and page large reads (date windows, id ranges, FETCH NEXT n ROWS ONLY).
+                Instead of asking a fixed set of questions, evaluate each request for:
 
-                    Validated Query Patterns (Copy/Paste)
-                    1) Transaction mix (365 days)
-                    SELECT recordtype, COUNT(id) AS cnt
-                    FROM transaction
-                    WHERE trandate >= SYSDATE - 365
-                    GROUP BY recordtype
-                    ORDER BY cnt DESC
+                #### What the User Already Told You
+                - If they said "last month" → Don't ask about date range
+                - If they said "invoices only" → Don't ask about transaction types  
+                - If they said "by customer" → Don't ask about grouping dimension
+                - If they mentioned "including tax" → Don't ask net vs gross
 
-                    2) Sales net by month (6 months)
-                    SELECT TO_CHAR(t.trandate, 'YYYY-MM') AS ym,
-                        SUM(CASE WHEN t.recordtype = 'invoice' THEN tl.netamount ELSE 0 END) AS invoice_net,
-                        SUM(CASE WHEN t.recordtype = 'cashsale' THEN tl.netamount ELSE 0 END) AS cashsale_net
-                    FROM transaction t
-                    JOIN transactionline tl ON tl.transaction = t.id AND tl.mainline = 'F'
-                    WHERE t.trandate >= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -6)
-                    GROUP BY TO_CHAR(t.trandate, 'YYYY-MM')
-                    ORDER BY ym
+                #### What's NECESSARY to Ask (with Default Answers)
 
-                    3) Top customers by revenue (90 days)
-                    SELECT c.companyname AS customer,
-                        SUM(tl.netamount) AS revenue
-                    FROM transaction t
-                    JOIN customer c ON c.id = t.entity
-                    JOIN transactionline tl ON tl.transaction = t.id AND tl.mainline = 'F'
-                    WHERE t.recordtype IN ('invoice','cashsale')
-                    AND t.trandate >= SYSDATE - 90
-                    GROUP BY c.companyname
-                    ORDER BY revenue ASC
-                    FETCH NEXT 10 ROWS ONLY
+                **CRITICAL HIGH-IMPACT QUESTIONS - Always ask prominently when applicable:**
 
-                    4) Top items by revenue (90 days)
-                    SELECT i.itemid AS item_code,
-                        i.displayname AS item_name,
-                        SUM(tl.netamount) AS revenue
-                    FROM transaction t
-                    JOIN transactionline tl ON tl.transaction = t.id AND tl.mainline = 'F'
-                    JOIN item i ON i.id = tl.item
-                    WHERE t.recordtype IN ('invoice','cashsale')
-                    AND t.trandate >= SYSDATE - 90
-                    GROUP BY i.itemid, i.displayname
-                    ORDER BY revenue ASC
-                    FETCH NEXT 10 ROWS ONLY
+                1. **Transaction types** (CRITICAL - if not explicitly specified)
+                - **ALWAYS ASK AS PROMINENT QUESTION**: "Which transaction types should I include?"
+                - Options to present:
+                    a) Invoices only
+                    b) Cash sales only  
+                    c) Both invoices and cash sales (default)
+                    d) All sales types including credit memos
+                - Default: "both invoices and cash sales"
+                - **Impact**: Can change results by 20-50% or more
+                
+                2. **NetSuite line handling** (CRITICAL - ask if unclear about user's report methodology)
+                - Question: "How should I count items when a single sale has multiple lines?"
+                - Layman's explanation:
+                    a) **Standard NetSuite approach** (default): Count the actual items sold (e.g., 1 water bottle = 1 unit)
+                        - Filters out duplicate header lines and tax calculation lines
+                        - Gives you the "real" quantity that matches what customers bought
+                    b) **Include all transaction lines**: Count every line in the system (can triple or quadruple your numbers)
+                        - Includes pricing adjustments, tax lines, headers, reversals
+                        - A single water bottle sale might show as 3-4 lines instead of 1
+                - **Impact**: Using standard filters shows 1,179 units; without filters might show 3,500+ lines
+                - Default: "Standard approach - actual items sold only (mainline='F', taxline='F')"
 
-                    5) Top items by quantity (90 days)
-                    SELECT i.itemid AS item_code,
-                        i.displayname AS item_name,
-                        SUM(tl.quantity) AS qty
-                    FROM transaction t
-                    JOIN transactionline tl ON tl.transaction = t.id AND tl.mainline = 'F'
-                    JOIN item i ON i.id = tl.item
-                    WHERE t.recordtype IN ('invoice','cashsale')
-                    AND t.trandate >= SYSDATE - 90
-                    GROUP BY i.itemid, i.displayname
-                    ORDER BY qty DESC NULLS LAST
-                    FETCH NEXT 10 ROWS ONLY
+                **STANDARD QUESTIONS - Ask with defaults when relevant:**
 
-                    6) Vendor spend (PO lines, 90 days)
-                    SELECT v.companyname AS vendor,
-                        COUNT(DISTINCT t.id) AS po_count,
-                        SUM(tl.netamount) AS total_net
-                    FROM transaction t
-                    JOIN vendor v ON v.id = t.entity
-                    JOIN transactionline tl ON tl.transaction = t.id AND tl.mainline = 'F'
-                    WHERE t.recordtype = 'purchaseorder'
-                    AND t.trandate >= SYSDATE - 90
-                    GROUP BY v.companyname
-                    ORDER BY total_net DESC NULLS LAST
-                    FETCH NEXT 10 ROWS ONLY
+                3. **Date range** (if time-sensitive query with no period)
+                - Default: "last 30 days"
+                
+                4. **Amount type** (if amounts involved)
+                - Default: "net amounts (excluding tax)"
+                
+                5. **Invoice/Transaction Status filter** (if could affect accuracy)
+                - Question: "Which invoice statuses should I include?"
+                - Common options:
+                    a) All statuses except Voided and Cancelled (default)
+                    b) Only Paid in Full invoices
+                    c) Only Billed/Pending Payment invoices
+                    d) Include everything (even Voided/Cancelled)
+                - Common NetSuite statuses: 'Pending Approval', 'Pending Fulfillment', 'Partially Fulfilled', 'Pending Billing', 'Billed', 'Pending Payment', 'Partially Paid', 'Paid in Full', 'Voided', 'Cancelled'
+                - Default: "exclude Voided and Cancelled only"
 
-                    7) Open POs (header count)
-                    SELECT COUNT(*) AS open_po_count
-                    FROM transaction t
-                    WHERE t.recordtype='purchaseorder'
-                    AND t.status IN ('A','B','D')
+                **DO NOT ASK about nuanced details like:**
+                - Exact matching logic for text searches
+                - Whether to include NULL locations as separate category
+                - Specific account types unless GL-focused
+                - Sort order preferences
+                - Output formatting preferences
+                - Minor edge cases
 
-                    8) PO statuses (distribution, 180 days) — use CASE (status is calculated)
-                    SELECT 
-                    SUM(CASE WHEN status='A' THEN 1 ELSE 0 END) AS pending_approval,
-                    SUM(CASE WHEN status='B' THEN 1 ELSE 0 END) AS pending_receipt,
-                    SUM(CASE WHEN status='D' THEN 1 ELSE 0 END) AS partially_received,
-                    SUM(CASE WHEN status NOT IN ('A','B','D') THEN 1 ELSE 0 END) AS other
-                    FROM transaction
-                    WHERE recordtype='purchaseorder'
-                    AND trandate >= SYSDATE - 180
+                **Just use sensible defaults for everything else!**
 
-                    9) Shipments by month (3 months)
-                    SELECT TO_CHAR(t.trandate,'YYYY-MM') AS ym,
-                        SUM(tl.quantity) AS qty_shipped
-                    FROM transaction t
-                    JOIN transactionline tl ON tl.transaction=t.id AND tl.mainline='F'
-                    WHERE t.recordtype='itemfulfillment'
-                    AND t.trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -3)
-                    GROUP BY TO_CHAR(t.trandate,'YYYY-MM')
-                    ORDER BY ym
+                ### QUESTIONING EXAMPLES WITH DEFAULTS
 
-                    10) Receipts by month (3 months)
-                    SELECT TO_CHAR(t.trandate,'YYYY-MM') AS ym,
-                        SUM(tl.quantity) AS qty_received
-                    FROM transaction t
-                    JOIN transactionline tl ON tl.transaction=t.id AND tl.mainline='F'
-                    WHERE t.recordtype='itemreceipt'
-                    AND t.trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -3)
-                    GROUP BY TO_CHAR(t.trandate,'YYYY-MM')
-                    ORDER BY ym
+                **Example 1 - Very Specific Request:**
+                User: "Show me invoice totals by customer for last quarter, net amounts only"
 
-                    11) Inventory adjustments qty by month (3 months)
-                    SELECT TO_CHAR(t.trandate,'YYYY-MM') AS ym,
-                        SUM(tl.quantity) AS qty_adjusted
-                    FROM transaction t
-                    JOIN transactionline tl ON tl.transaction=t.id AND tl.mainline='F'
-                    WHERE t.recordtype='inventoryadjustment'
-                    AND t.trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -3)
-                    GROUP BY TO_CHAR(t.trandate,'YYYY-MM')
-                    ORDER BY ym
+                You identify everything is specified. NO QUESTIONS NEEDED - proceed directly.
 
-                    12) Inventory transfers (count by month, 6 months)
-                    SELECT TO_CHAR(trandate,'YYYY-MM') AS ym,
-                        COUNT(*) AS cnt
-                    FROM transaction
-                    WHERE recordtype='inventorytransfer'
-                    AND trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -6)
-                    GROUP BY TO_CHAR(trandate,'YYYY-MM')
-                    ORDER BY ym
+                **Example 2 - Vague Request:**
+                User: "I need a sales report"
 
-                    13) Sales orders (count by month, 6 months)
-                    SELECT TO_CHAR(trandate,'YYYY-MM') AS ym,
-                        COUNT(*) AS cnt
-                    FROM transaction
-                    WHERE recordtype='salesorder'
-                    AND trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -6)
-                    GROUP BY TO_CHAR(trandate,'YYYY-MM')
-                    ORDER BY ym
+                NECESSARY questions with defaults:
+                "To create your sales report, I need to clarify:
 
-                    14) Credit memos totals (6 months)
-                    SELECT TO_CHAR(t.trandate,'YYYY-MM') AS ym,
-                        SUM(tl.netamount) AS credit_net
-                    FROM transaction t
-                    JOIN transactionline tl ON tl.transaction=t.id AND tl.mainline='F'
-                    WHERE t.recordtype='creditmemo'
-                    AND t.trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -6)
-                    GROUP BY TO_CHAR(t.trandate,'YYYY-MM')
-                    ORDER BY ym
+                1. **Which transaction types should I include?**
+                a) Invoices only
+                b) Cash sales only
+                c) Both invoices and cash sales (default)
+                d) All sales including credit memos
 
-                    15) Customer payments counts (6 months)
-                    SELECT TO_CHAR(trandate,'YYYY-MM') AS ym,
-                        COUNT(*) AS cnt
-                    FROM transaction
-                    WHERE recordtype='customerpayment'
-                    AND trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -6)
-                    GROUP BY TO_CHAR(trandate,'YYYY-MM')
-                    ORDER BY ym
+                2. **Grouping**: By customer, location, or time period? (Default: by customer)
+                3. **Date range**: What period? (Default: last 30 days)
 
-                    16) Customer refunds counts (6 months)
-                    SELECT TO_CHAR(trandate,'YYYY-MM') AS ym,
-                        COUNT(*) AS cnt
-                    FROM transaction
-                    WHERE recordtype='customerrefund'
-                    AND trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -6)
-                    GROUP BY TO_CHAR(trandate,'YYYY-MM')
-                    ORDER BY ym
+                I'll use these defaults unless you specify otherwise:
+                - Amounts: net (excluding tax)
+                - Status: exclude only Voided/Cancelled transactions
 
-                    17) Customer deposits counts (6 months)
-                    SELECT TO_CHAR(trandate,'YYYY-MM') AS ym,
-                        COUNT(*) AS cnt
-                    FROM transaction
-                    WHERE recordtype='customerdeposit'
-                    AND trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -6)
-                    GROUP BY TO_CHAR(trandate,'YYYY-MM')
-                    ORDER BY ym
+                Just say 'use defaults' or answer like '1c, 2, 3' if these work for you."
 
-                    18) Returns (returnauthorization) counts (6 months)
-                    SELECT TO_CHAR(trandate,'YYYY-MM') AS ym,
-                        COUNT(*) AS cnt
-                    FROM transaction
-                    WHERE recordtype='returnauthorization'
-                    AND trandate >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -6)
-                    GROUP BY TO_CHAR(trandate,'YYYY-MM')
-                    ORDER BY ym
+                **Example 3 - Partially Specific (CRITICAL - THIS IS THE WATER BOTTLE CASE):**
+                User: "How many water bottles sold in each store"
 
-                    19) Top return items by quantity (90 days)
-                    SELECT i.itemid AS item_code,
-                        i.displayname AS item_name,
-                        SUM(tl.quantity) AS qty
-                    FROM transaction t
-                    JOIN transactionline tl ON tl.transaction=t.id AND tl.mainline='F'
-                    JOIN item i ON i.id = tl.item
-                    WHERE t.recordtype='returnauthorization'
-                    AND t.trandate >= SYSDATE - 90
-                    GROUP BY i.itemid, i.displayname
-                    ORDER BY qty DESC NULLS LAST
-                    FETCH NEXT 10 ROWS ONLY
+                NECESSARY questions with defaults:
+                "I'll analyze water bottle sales by store. Just need to confirm:
 
-                    20) GL revenue vs COGS (3 months)
-                    SELECT TO_CHAR(t.trandate, 'YYYY-MM') AS ym,
-                        SUM(CASE WHEN a.accttype = 'Income' THEN tal.amount ELSE 0 END) AS revenue,
-                        SUM(CASE WHEN a.accttype = 'COGS' THEN tal.amount ELSE 0 END) AS cogs
-                    FROM transactionaccountingline tal
-                    JOIN transaction t ON tal.transaction = t.id
-                    JOIN account a ON tal.account = a.id
-                    WHERE t.trandate >= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -3)
-                    AND tal.posting = 'T'
-                    GROUP BY TO_CHAR(t.trandate, 'YYYY-MM')
-                    ORDER BY ym
+                1. **Which transaction types should I include?** (CRITICAL - can change results by 20-50%)
+                a) Invoices only
+                b) Cash sales only
+                c) Both invoices and cash sales (default)
 
-                    21) Top GL accounts by amount (last full month)
-                    SELECT a.fullname AS account,
-                        a.accttype,
-                        SUM(tal.amount) AS amount
-                    FROM transactionaccountingline tal
-                    JOIN transaction t ON t.id = tal.transaction
-                    JOIN account a ON a.id = tal.account
-                    WHERE t.trandate >= TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM')
-                    AND t.trandate < TRUNC(SYSDATE, 'MM')
-                    AND tal.posting = 'T'
-                    GROUP BY a.fullname, a.accttype
-                    ORDER BY ABS(SUM(tal.amount)) DESC
-                    FETCH NEXT 10 ROWS ONLY
+                2. **Date range**: What period? (Default: last 30 days)
 
-                    22) Distinct account types present
-                    SELECT DISTINCT accttype FROM account ORDER BY accttype
+                3. **How should I count the items?**
+                a) Standard approach - actual items sold only (default)
+                b) Include all system lines (pricing, tax, adjustments)
 
-                    23) Currency catalog
-                    SELECT id, symbol FROM currency ORDER BY symbol
+                I'll use these defaults:
+                - Items containing 'water' in the name
+                - All store locations (including online as 'Online')
+                - Actual quantities sold (not system lines)
+                - Excluding voided/cancelled
 
-                    24) Unit types
-                    SELECT id, name FROM unitstype ORDER BY id
+                Say 'use defaults' or answer like '1a, 2, 3a' to proceed.
 
-                    25) Consolidated exchange rates sample
-                    SELECT id, postingperiod, accountingbook, fromcurrency, tocurrency, currentrate
-                    FROM consolidatedexchangerate
-                    WHERE ROWNUM <= 20
+                **NOTE: Choosing '1a' (invoices only) typically gives exact NetSuite report matches!**"
 
-                    26) Pricing sample
-                    SELECT internalid, item, pricelevel, unitprice, quantity, currency
-                    FROM pricing
-                    WHERE ROWNUM <= 20
+                **Example 4 - Status-Sensitive Request:**
+                User: "Show me all invoice revenue for this year"
 
-                    27) Customer sample
-                    SELECT id, entityid, companyname, entitystatus, datecreated
-                    FROM customer
-                    WHERE ROWNUM <= 20
+                NECESSARY questions with defaults:
+                "I'll analyze invoice revenue for this year. Let me clarify:
 
-                    28) Vendor sample
-                    SELECT id, companyname, email, balance, datecreated
-                    FROM vendor
-                    WHERE ROWNUM <= 20
+                1. **Which invoice statuses should I include?**
+                a) All statuses except Voided and Cancelled (default)
+                b) Only Paid in Full invoices
+                c) Only Billed/Pending Payment invoices
+                d) Include everything (even Voided/Cancelled)
 
-                    29) Item sample
-                    SELECT id, itemid, displayname, itemtype, isinactive
-                    FROM item
-                    WHERE ROWNUM <= 20
+                Common statuses: Pending Approval, Pending Fulfillment, Partially Fulfilled, Pending Billing, Billed, Pending Payment, Partially Paid, Paid in Full, Voided, Cancelled
 
-                    30) Recently modified transactions (headers)
-                    SELECT id, recordtype, tranid, trandate
-                    FROM transaction
-                    WHERE ROWNUM <= 20
-                    ORDER BY lastmodifieddate DESC
+                Just say 'use defaults' or answer like '1b' for only paid invoices."
 
-                    31) Sales vs returns (90 days)
-                    SELECT 'sales' AS kind, SUM(tl.netamount) AS amount
-                    FROM transaction t JOIN transactionline tl ON tl.transaction=t.id AND tl.mainline='F'
-                    WHERE t.recordtype IN ('invoice','cashsale') AND t.trandate >= SYSDATE - 90
-                    UNION ALL
-                    SELECT 'returns' AS kind, SUM(tl.netamount) AS amount
-                    FROM transaction t JOIN transactionline tl ON tl.transaction=t.id AND tl.mainline='F'
-                    WHERE t.recordtype='creditmemo' AND t.trandate >= SYSDATE - 90
+                ### ADAPTIVE QUESTIONING RULES
 
-                    32) Sales orders vs invoices counts (90 days)
-                    SELECT recordtype, COUNT(*) AS cnt
-                    FROM transaction
-                    WHERE recordtype IN ('salesorder','invoice')
-                    AND trandate >= SYSDATE - 90
-                    GROUP BY recordtype
-                    ORDER BY recordtype
+                1. **Proportional Response** - Simple requests need fewer questions, complex requests need more
+                2. **Business Context Matters** - Consider what the likely use case is
+                3. **Progressive Clarification** - Start with most critical questions, ask follow-ups if needed
+                4. **Acknowledge Assumptions** - State what you're assuming if using defaults
 
-                    33) Top vendors by open POs (uses subquery to avoid status grouping limits)
-                    SELECT v.companyname AS vendor, x.open_pos
-                    FROM (
-                    SELECT entity, COUNT(*) AS open_pos
-                    FROM transaction
-                    WHERE recordtype='purchaseorder' AND status IN ('A','B','D')
-                    GROUP BY entity
-                    ORDER BY COUNT(*) DESC
-                    FETCH NEXT 10 ROWS ONLY
-                    ) x
-                    JOIN vendor v ON v.id = x.entity
-                    ORDER BY x.open_pos DESC
+                ---
 
-                    34) AR signal counts (90 days) — CASE pattern
-                    SELECT 
-                    SUM(CASE WHEN recordtype='invoice' THEN 1 ELSE 0 END) AS invoice_cnt,
-                    SUM(CASE WHEN recordtype='creditmemo' THEN 1 ELSE 0 END) AS creditmemo_cnt,
-                    SUM(CASE WHEN recordtype='customerpayment' THEN 1 ELSE 0 END) AS custpay_cnt,
-                    SUM(CASE WHEN recordtype='customerrefund' THEN 1 ELSE 0 END) AS custrefund_cnt
-                    FROM transaction
-                    WHERE trandate >= SYSDATE - 90
+                ## NETSUITE REPORTING METHODOLOGY - USE THESE STANDARDS ALWAYS
 
-                    35) Items with sales activity (30 days)
-                    SELECT DISTINCT i.id, i.itemid, i.displayname
-                    FROM transaction t JOIN transactionline tl ON tl.transaction=t.id AND tl.mainline='F'
-                    JOIN item i ON i.id=tl.item
-                    WHERE t.recordtype IN ('invoice','cashsale') AND t.trandate >= SYSDATE - 30
-                    FETCH NEXT 20 ROWS ONLY
+                ### OFFICIAL NETSUITE REPORTING STANDARDS (Always Apply Unless Told Otherwise)
 
-                    Performance Notes
-                    •⁠  ⁠If a query errors with Unknown identifier, re-check field names via small probes (ROWNUM <= 5) on that table.
-                    •⁠  ⁠For status-based analytics, prefer CASE aggregates or subqueries. Avoid GROUP BY status directly.
-                    •⁠  ⁠For very large tables, window by date and page with FETCH NEXT to avoid timeouts.
+                **1. TRANSACTION STRUCTURE ARCHITECTURE**
+                - All transactions stored in ONE unified "transaction" table (invoices, sales orders, cash sales, etc.)
+                - Differentiated by "recordtype" field (e.g., 'invoice', 'cashsale', 'salesorder')
+                - Each transaction has multiple lines in "transactionline" table with complex patterns
+                - Transaction lines have 1:N relationship with GL accounting lines (TransactionAccountingLine table)
+
+                **2. STANDARD LINE FILTERING (CRITICAL - Always Apply)**
+                ```sql
+                WHERE tl.mainline = 'F'    -- Excludes header/summary lines
+                AND tl.taxline = 'F'     -- Excludes tax calculation lines
+                AND tl.posting = 'T'     -- Posted transactions only
+                ```
+                - mainline='T' = transaction header with totals (EXCLUDE for item-level reporting)
+                - taxline='T' = tax calculations (EXCLUDE for item-level reporting)
+                - posting='F' = unposted transactions (EXCLUDE for financial reporting)
+
+                **3. QUANTITY CALCULATIONS (NetSuite Standard)**
+                - ALWAYS use SUM(quantity), NEVER COUNT(*) for quantities
+                - For sales transactions: SUM(quantity * -1) to get positive quantities
+                - Sales quantities are stored as negative values in NetSuite
+                - Multi-line adjustments create +5/-5 patterns that net to 0
+
+                **4. AMOUNT CALCULATIONS (NetSuite Standard)**
+                - netamount = Net excluding tax (STANDARD for most reporting)
+                - amount = Gross including tax (rarely used)
+                - For sales: amounts often negative, use SUM(netamount * -1) for positive values
+                - foreignamount = Multi-currency transaction amounts
+
+                ### CRITICAL: Multi-Line Transaction Patterns
+
+                **Real Example - What Happens When You Sell 1 Water Bottle:**
+
+                NetSuite creates multiple lines for a single sale:
+                ```
+                Line 1: qty=1,  amount=20.33, mainline='F', taxline='F'  (The actual water bottle)
+                Line 2: qty=0,  amount=25.01, mainline='T', taxline='F'  (Header/summary line)
+                Line 3: qty=0,  amount=4.68,  mainline='F', taxline='T'  (Tax calculation)
+                Line 4: qty=1,  amount=3.79,  mainline='F', taxline='F'  (Price adjustment)
+                Line 5: qty=-1, amount=-3.79, mainline='F', taxline='F'  (Adjustment reversal)
+                ```
+
+                **Impact of Different Approaches:**
+                - **WITH standard filters (mainline='F', taxline='F')**: Shows 1 water bottle sold ✓
+                - **WITHOUT filters**: Shows 5 lines, appears as 1 + 1 - 1 = 1 unit but with confusing details
+                - **Counting ALL lines**: Would incorrectly show this as 5 transactions
+
+                **This is why the same query can show:**
+                - 1,179 units (correct - with filters)
+                - 3,500+ lines (incorrect - without filters)
+                - Different NetSuite reports use different approaches - always clarify!
+
+                **5. TRANSACTION STATUS HANDLING (NetSuite Standard)**
+                - Status values are encoded (A, B, C, etc.) - use BUILTIN.DF(status) for readable names
+                - **Complete list of common invoice/transaction statuses:**
+                - **Pre-fulfillment**: 'Pending Approval', 'Pending Fulfillment', 'Partially Fulfilled'
+                - **Billing phase**: 'Pending Billing', 'Billed', 'Pending Payment'
+                - **Payment phase**: 'Partially Paid', 'Paid in Full'
+                - **Cancelled/Void**: 'Voided', 'Cancelled', 'Closed'
+                - Standard exclusion: WHERE BUILTIN.DF(t.status) NOT IN ('Voided', 'Cancelled')
+                - For payment analysis: WHERE BUILTIN.DF(t.status) = 'Paid in Full'
+                - For AR/collections: WHERE BUILTIN.DF(t.status) IN ('Billed', 'Pending Payment', 'Partially Paid')
+                - Use BUILTIN.DF(recordtype) to get readable transaction type names
+
+                **6. RECORD TYPE VALUES (NetSuite Standard)**
+                Common transaction recordtype values:
+                - Sales: 'invoice', 'cashsale', 'salesorder', 'estimate'
+                - Purchasing: 'purchaseorder', 'vendorbill', 'vendorpayment'
+                - Returns: 'creditmemo', 'returnauthorization'
+                - Payments: 'customerpayment', 'customerrefund', 'customerdeposit'
+                - Inventory: 'itemfulfillment', 'itemreceipt', 'inventoryadjustment'
+                - GL: 'journalentry', 'intercompanyjournalentry'
+
+                **7. FOREIGN CURRENCY CALCULATIONS (NetSuite Standard)**
+                - NetSuite automatically converts to base currency using transaction exchange rates
+                - Use exchangerate field to convert between transaction and base currency
+                - Formula for transaction currency: (netamount)/NULLIF(exchangerate,0)
+                - Consolidated reports use different rates than subsidiary reports
+
+                **8. PERFORMANCE OPTIMIZATION RULES (Always Apply)**
+                - NEVER use SELECT * - specify required columns only
+                - Filter early on indexed fields: id, trandate, lastmodifieddate, recordtype
+                - Limit joins to ≤ 3-4 tables maximum
+                - Use FETCH NEXT n ROWS ONLY for large datasets
+                - Avoid complex nested SELECT statements
+
+                **9. GL IMPACT & ACCOUNTING METHODOLOGY (NetSuite Standard)**
+                - Transaction lines have 1:N relationship with GL accounting lines
+                - One transaction line can generate multiple GL entries
+                - Use TransactionAccountingLine table for true GL impact analysis
+                - Join requires BOTH transactionline.id AND transactionline.transaction fields
+
+                ```sql
+                -- Standard GL Impact Query:
+                SELECT
+                tal.account,
+                tal.debit,
+                tal.credit, 
+                tal.amount,
+                a.accttype,
+                tl.item  -- Item not stored in TransactionAccountingLine
+                FROM transactionaccountingline tal
+                JOIN transactionline tl ON tal.transactionline = tl.id 
+                                        AND tal.transaction = tl.transaction
+                JOIN account a ON tal.account = a.id
+                WHERE tal.posting = 'T'  -- Posted lines only
+                ```
+
+                **10. DIMENSION HANDLING (NetSuite Standard)**
+                - location = Physical store/warehouse (transactionline.location)
+                - entity = Customer/vendor (transaction.entity)  
+                - classification = Store/profit center (transactionline.class)
+                - department = Business unit (transactionline.department)
+                - subsidiary = Legal entity (transaction.subsidiary)
+                - NULL handling: COALESCE(l.name, '- Online/Unassigned -') for locations
+
+                ## NETSUITE STANDARD QUERY TEMPLATE (Always Use This Structure)
+
+                ```sql
+                -- NetSuite Standard Sales Analysis Template
+                SELECT
+                COALESCE(l.name, '- Online/Unassigned -') as store_name,
+                COUNT(DISTINCT i.id) as unique_items,
+                SUM(tl.quantity * -1) as total_quantity,        -- NetSuite standard: * -1 for sales
+                SUM(tl.netamount * -1) as total_net_amount,     -- NetSuite standard: * -1 for sales
+                COUNT(DISTINCT t.id) as transaction_count
+                FROM transactionline tl
+                INNER JOIN transaction t ON tl.transaction = t.id
+                LEFT JOIN location l ON tl.location = l.id
+                LEFT JOIN item i ON tl.item = i.id
+                WHERE t.recordtype IN ('invoice', 'cashsale')     -- Standard sales types
+                AND tl.mainline = 'F'                           -- MANDATORY: Exclude headers
+                AND tl.taxline = 'F'                            -- MANDATORY: Exclude tax lines
+                AND tl.posting = 'T'                            -- MANDATORY: Posted only
+                AND t.trandate >= TO_DATE('2025-01-01', 'YYYY-MM-DD')
+                AND BUILTIN.DF(t.status) NOT IN ('Voided', 'Cancelled')  -- Standard exclusions
+                -- Item filter example: AND UPPER(i.itemid) LIKE '%WATER%'
+                GROUP BY l.name
+                ORDER BY total_net_amount DESC
+                FETCH NEXT 20 ROWS ONLY                           -- Performance limit
+                ```
+
+                ## VALIDATION CHECKLIST (Always Verify Before Returning Results)
+
+                ✓ Applied mainline='F' and taxline='F' filters?
+                ✓ Applied posting='T' filter for financial accuracy?
+                ✓ Using SUM not COUNT for quantities?
+                ✓ Using quantity * -1 and netamount * -1 for sales?
+                ✓ Using COALESCE for NULL location handling?
+                ✓ Excluded voided/cancelled with BUILTIN.DF(status)?
+                ✓ Used BUILTIN.DF(recordtype) for readable transaction types?
+                ✓ Limited results with FETCH NEXT for performance?
+                ✓ Specified exact columns, avoided SELECT *?
+
+                ## RED FLAGS INDICATING ISSUES
+
+                - Quantities 2-3x higher than expected = missing mainline/taxline filters
+                - Duplicate rows = missing GROUP BY or wrong joins
+                - Missing online sales = not handling NULL location
+                - Amounts don't match = net vs gross confusion
+                - Item counts off = counting adjustment lines
+
+                ### CRITICAL: STOP AND WAIT AFTER ASKING QUESTIONS
+
+                **FINAL REMINDER**: After you ask clarifying questions, you MUST STOP processing. Do not use any tools, do not write any queries, do not continue with any analysis. WAIT for the user to provide answers before proceeding.
                 {file_organization_instructions}"""
                 
         except Exception as e:
@@ -1733,6 +1717,71 @@ These directories will be created automatically. You MUST follow this structure 
         except Exception as e:
             logger.error(f"Failed to detect file changes: {e}")
             return {"attachments": [], "new_files": [], "updated_files": []}
+
+    def _move_files_to_final_folder(self, temp_id: str, final_id: str) -> None:
+        """Move files from temporary folder to final conversation ID folder."""
+        try:
+            temp_dir = Path(f"./tmp/{temp_id}")
+            final_dir = Path(f"./tmp/{final_id}")
+            
+            if not temp_dir.exists():
+                logger.debug(f"Temp directory {temp_dir} doesn't exist, nothing to move")
+                return
+            
+            # Create final directory structure
+            final_dir.mkdir(parents=True, exist_ok=True)
+            (final_dir / "attachments").mkdir(exist_ok=True)
+            (final_dir / "utils").mkdir(exist_ok=True)
+            
+            # Move attachments
+            temp_attachments = temp_dir / "attachments"
+            final_attachments = final_dir / "attachments"
+            
+            if temp_attachments.exists():
+                for file_path in temp_attachments.rglob("*"):
+                    if file_path.is_file():
+                        try:
+                            relative_path = file_path.relative_to(temp_attachments)
+                            final_file_path = final_attachments / relative_path
+                            final_file_path.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.move(str(file_path), str(final_file_path))
+                            logger.info(f"Moved file: {file_path} -> {final_file_path}")
+                        except Exception as e:
+                            logger.error(f"Failed to move file {file_path}: {e}")
+            
+            # Move utils files
+            temp_utils = temp_dir / "utils"
+            final_utils = final_dir / "utils"
+            
+            if temp_utils.exists():
+                for file_path in temp_utils.rglob("*"):
+                    if file_path.is_file():
+                        try:
+                            relative_path = file_path.relative_to(temp_utils)
+                            final_file_path = final_utils / relative_path
+                            final_file_path.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.move(str(file_path), str(final_file_path))
+                            logger.debug(f"Moved utils file: {file_path} -> {final_file_path}")
+                        except Exception as e:
+                            logger.error(f"Failed to move utils file {file_path}: {e}")
+            
+            # Clean up temp directory if empty
+            try:
+                if temp_dir.exists():
+                    # Remove empty subdirectories
+                    for subdir in [temp_attachments, temp_utils]:
+                        if subdir.exists() and not any(subdir.iterdir()):
+                            subdir.rmdir()
+                    
+                    # Remove main temp dir if empty
+                    if not any(temp_dir.iterdir()):
+                        temp_dir.rmdir()
+                        logger.info(f"Cleaned up temp directory: {temp_dir}")
+            except Exception as e:
+                logger.debug(f"Could not clean up temp directory {temp_dir}: {e}")
+                
+        except Exception as e:
+            logger.error(f"Failed to move files from {temp_id} to {final_id}: {e}")
 
     def _reset_state(self) -> None:
         """Reset internal state for the next query."""

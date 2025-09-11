@@ -16,6 +16,8 @@ from src.claude_sdk_server.api.routers.claude_router import router as claude_rou
 from src.claude_sdk_server.api.routers.streaming_router import (
     router as streaming_router,
 )
+from src.claude_sdk_server.api.routers.file_router import router as file_router
+from src.claude_sdk_server.api.routers.files_router import router as files_router
 from src.claude_sdk_server.utils.logging_config import get_logger
 
 # Initialize logger with clean loguru configuration
@@ -42,6 +44,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:8000",
+        "http://localhost:8081",
         "*",
     ],  # Allow frontend origin
     allow_credentials=True,
@@ -70,6 +73,12 @@ app.include_router(claude_router)
 
 logger.structured("router_registration", router_name="streaming_router")
 app.include_router(streaming_router)
+
+logger.structured("router_registration", router_name="file_router")
+app.include_router(file_router)
+
+logger.structured("router_registration", router_name="files_router")
+app.include_router(files_router)
 
 logger.info("🚀 Claude SDK Server initialized successfully")
 
