@@ -1252,7 +1252,8 @@ These directories will be created automatically. You MUST follow this structure 
 """
             logger.info(original_prompt)
             if original_prompt:
-                return original_prompt + file_organization_instructions
+                return original_prompt
+                #return original_prompt + file_organization_instructions
             else:
                 return f"""
 # NetSuite SuiteQL Analyst System Prompt - FINAL VERSION WITH BATCHING
@@ -1699,8 +1700,8 @@ Remember: Every business question has a specific context. A request for "sales d
 NetSuite is an ERP with complex business logic. Understanding the business need is as important as SQL syntax. Be intelligent about what needs clarification based on the specific request, not a checklist.
 
 ## FINAL CRITICAL INSTRUCTION
-**STOP HERE after asking your questions. DO NOT use any tools, DO NOT write any queries, DO NOT continue processing. WAIT for the user to answer your questions first. This is mandatory - no exceptions, even if you think you know what the user wants.**
-                {file_organization_instructions}"""
+**STOP HERE after asking your questions. DO NOT use any tools, DO NOT write any queries, DO NOT continue processing. WAIT for the user to answer your questions first. This is mandatory - no exceptions, even if you think you know what the user wants.**"""
+                #{file_organization_instructions}
                 
         except Exception as e:
             logger.error(f"Failed to build enhanced system prompt: {e}")
