@@ -4,13 +4,12 @@ import os
 
 from dotenv import load_dotenv
 import atla_insights
-
-# Load environment variables from .env file
-load_dotenv()
-import logfire
 from atla_insights import instrument_claude_code_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from src.claude_sdk_server.api.routers.claude_router import router as claude_router
 from src.claude_sdk_server.api.routers.streaming_router import (
@@ -20,15 +19,11 @@ from src.claude_sdk_server.api.routers.file_router import router as file_router
 from src.claude_sdk_server.api.routers.files_router import router as files_router
 from src.claude_sdk_server.utils.logging_config import get_logger
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Initialize logger with clean loguru configuration
 logger = get_logger(__name__)
-
-# Configure third-party integrations
-atla_insights.configure(
-    token=os.environ["ATLA_INSIGHTS_API_KEY"],
-    metadata={"environment": os.environ["ATLA_ENVIRONMENT"]},
-)
-instrument_claude_code_sdk()
 
 # Create FastAPI application
 logger.reasoning("Initializing FastAPI application with clean architecture")
@@ -62,10 +57,23 @@ logger.context(
     },
 )
 
-# Configure logfire monitoring
-logger.analysis("Configuring logfire for application monitoring")
-logfire.configure()
-logfire.instrument_fastapi(app, capture_headers=True)
+# Configure observability exporters
+logger.analysis("Configuring logfire exporter for application monitoring")
+logfire_exporter = OTLPSpanExporter(
+    endpoint="https://logfire-eu.pydantic.dev/v1/traces",
+    headers={"Authorization": f"Bearer {os.environ['LOGFIRE_TOKEN']}"},
+)
+logfire_span_processor = BatchSpanProcessor(logfire_exporter)
+
+FastAPIInstrumentor.instrument_app(app)
+
+# Configure third-party integrations
+atla_insights.configure(
+    token=os.environ["ATLA_INSIGHTS_API_KEY"],
+    metadata={"environment": os.environ["ATLA_ENVIRONMENT"]},
+    additional_span_processors=[logfire_span_processor],
+)
+instrument_claude_code_sdk()
 
 # Include routers
 logger.structured("router_registration", router_name="claude_router")
