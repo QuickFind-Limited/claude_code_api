@@ -126,12 +126,18 @@ claude_sdk_server/
 │       │   └── routers/
 │       │       ├── attachments_router.py  # Attachment download endpoint
 │       │       └── claude_router.py       # SSE conversation endpoint
-│       ├── legacy/                        # Archived router implementations
 │       ├── models/
 │       ├── services/
 │       ├── streaming/
 │       └── utils/
-├── legacy/                                # Archived scripts, docs, data, tests
+├── legacy/
+│   ├── server/                            # Archived FastAPI router implementations
+│   ├── scripts/
+│   ├── docs/
+│   ├── data/
+│   ├── tests/
+│   ├── demos/
+│   └── logs/
 ├── chatbot-frontend/                      # Active React frontend
 ├── Makefile
 ├── docker-compose.yml

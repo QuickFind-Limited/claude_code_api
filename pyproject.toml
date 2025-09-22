@@ -29,7 +29,7 @@ packages = ["src/claude_sdk_server"]
 
 [tool.ruff]
 include = ["*.py", "*.pyi", "**/pyproject.toml"]
-exclude = ["legacy", "src/claude_sdk_server/legacy"]
+exclude = ["legacy"]
 
 [tool.ruff.lint]
 # Enable the isort rules.
