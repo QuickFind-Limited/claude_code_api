@@ -2,6 +2,7 @@
 
 import os
 
+from dotenv import load_dotenv
 import atla_insights
 from atla_insights import instrument_claude_code_sdk
 from fastapi import FastAPI
@@ -10,27 +11,16 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from src.claude_sdk_server.api.routers.attachments_router import (
-    router as attachments_router,
-)
 from src.claude_sdk_server.api.routers.claude_router import router as claude_router
+from src.claude_sdk_server.api.routers.streaming_router import (
+    router as streaming_router,
+)
+from src.claude_sdk_server.api.routers.file_router import router as file_router
+from src.claude_sdk_server.api.routers.files_router import router as files_router
 from src.claude_sdk_server.utils.logging_config import get_logger
 
-# Ensure required environment variables are present early during startup
-REQUIRED_ENV_VARS = [
-    "ANTHROPIC_API_KEY",
-    "ATLA_INSIGHTS_API_KEY",
-    "ATLA_ENVIRONMENT",
-    "LOGFIRE_TOKEN",
-]
-
-missing_env = [name for name in REQUIRED_ENV_VARS if not os.environ.get(name)]
-if missing_env:
-    missing_list = ", ".join(missing_env)
-    raise RuntimeError(
-        "Missing required environment variables: "
-        f"{missing_list}. Copy .env.example to .env and provide valid secrets before starting the server."
-    )
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize logger with clean loguru configuration
 logger = get_logger(__name__)
@@ -89,8 +79,14 @@ instrument_claude_code_sdk()
 logger.structured("router_registration", router_name="claude_router")
 app.include_router(claude_router)
 
-logger.structured("router_registration", router_name="attachments_router")
-app.include_router(attachments_router)
+logger.structured("router_registration", router_name="streaming_router")
+app.include_router(streaming_router)
+
+logger.structured("router_registration", router_name="file_router")
+app.include_router(file_router)
+
+logger.structured("router_registration", router_name="files_router")
+app.include_router(files_router)
 
 logger.info("🚀 Claude SDK Server initialized successfully")
 

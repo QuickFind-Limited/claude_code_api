@@ -42,7 +42,6 @@ COPY tests/ ./tests/
 COPY Makefile ./
 COPY docker-entrypoint.sh /usr/local/bin/
 COPY claude-config.json /app/
-COPY claude_agents/ /app/claude_agents/
 
 # Create logs directory
 RUN mkdir -p logs

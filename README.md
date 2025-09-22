@@ -5,80 +5,399 @@ A production-ready FastAPI server providing REST API interface to Claude Code SD
 ## ✨ Features
 
 ### Core Functionality
-- ✅ **Streaming Query API** – `/api/v1/query/stream` exposes Claude Code responses over Server-Sent Events with rich event metadata.
-- ✅ **Attachment Delivery** – `/api/v1/files/conversations/{conversationId}/attachments/{file}` serves generated artifacts for inline preview or download.
-- ✅ **Observability Ready** – Logfire instrumentation and Atla Insights hooks are preconfigured for traceable runs.
+- ✅ **Claude Query API** - Simple `/query` endpoint for Claude interactions
+- ✅ **Session Management** - Conversation continuity with session IDs
+- ✅ **Health Monitoring** - Health check endpoints
+- ✅ **Docker Support** - Production-ready containerization
 
-### Project Layout
-- 🗂️ **`legacy/` Archive** – Historical scripts, datasets, and experiments have been moved out of the active workspace but remain available for reference.
-- 🧱 **Focused Backend** – `src/claude_sdk_server` now contains only the production API surface and dependencies required by the current frontend.
+### 🆕 New Features (v2.0)
+- 🎯 **Beautiful Logging with Loguru** - Clean, structured logs with emojis
+- 📡 **Real-time Event Streaming** - SSE, WebSocket, and JSON Lines support
+- 📊 **Event Queue System** - Buffered event delivery for multiple clients
+- 🤔 **Thinking/Reasoning Extraction** - Capture Claude's thought process
+- 🛠️ **Tool Usage Tracking** - Monitor tool calls and results
+- 📈 **Performance Metrics** - Token usage, costs, and timing data
 
 ## 🚀 Quick Start
 
 ```bash
-cp .env.example .env   # Populate with real ANTHROPIC, ATLA, and LOGFIRE secrets
-make up                # Build and start the API container
-make logs              # Tail runtime logs
-make logs-pretty       # Optional: filtered log stream
+# Start the server
+make up
+
+# Test the API
+make test
+
+# Watch beautiful logs
+make logs-pretty
+
+# Test streaming
+make test-stream
 ```
 
-Once the stack is up, exercise the streaming endpoint:
+## 📦 Installation
+
+### Using Docker (Recommended)
 
 ```bash
-curl -N -X POST http://localhost:8000/api/v1/query/stream \
-  -H "Content-Type: application/json" \
-  -H "Accept: text/event-stream" \
-  -d '{
-        "prompt": "Generate a concise deployment checklist",
-        "model": "claude-sonnet-4-20250514"
-      }'
+# Using Make commands (easiest)
+make up      # Build and start server
+make down    # Stop server
+make logs    # View logs
+make restart # Restart server
 ```
 
-Each event includes a labeled `event` field (`connection`, `log`, `response`, `complete`, or `error`) and structured JSON data that the React frontend consumes directly. The final `response` payload matches the `QueryResponse` DTO so attachments and file-change metadata are available immediately.
+### Manual Docker Setup
+
+```bash
+# Build the Docker image
+docker build -t claude-sdk-server:latest .
+
+# Run with Docker Compose
+docker-compose up -d
+
+# Or run directly with Docker
+docker run -d \
+  --name claude-sdk-server \
+  -p 8000:8000 \
+  -e ANTHROPIC_API_KEY=your_api_key \
+  -e ATLA_INSIGHTS_API_KEY=your_atla_key \
+  -e ATLA_ENVIRONMENT=development \
+  claude-sdk-server:latest
+```
 
 ## 🎮 Makefile Commands
 
+### Basic Commands
 ```bash
-make up            # Build and start the server
-make down          # Stop the server
-make restart       # Restart the server
-make logs          # View server logs
-make logs-pretty   # Filter logs for key events
-make frontend-3002 # Launch the React dashboard (optional)
+make up          # Build and start the server
+make down        # Stop the server
+make restart     # Restart the server
+make logs        # View server logs
+make clean       # Clean up everything
+```
+
+### Testing Commands
+```bash
+make test        # Test basic API endpoints
+make test-stream # Test all streaming endpoints
+make test-sse    # Test Server-Sent Events
+make test-ws     # Test WebSocket info
+make test-events # Test event system
+make test-thinking # Test with thinking mode enabled
+```
+
+### API Commands
+```bash
+make query       # Send a test query to Claude
+make stream-status   # Check streaming system status
+make stream-clients  # List active streaming clients
+```
+
+### Development Commands
+```bash
+make logs-pretty    # Watch logs with beautiful formatting
+make demo-stream    # Run streaming demo with live query
+make monitor-events # Monitor events in real-time
 ```
 
 ## 📡 API Endpoints
 
-### Streaming Conversation
+### Core Endpoints
+
+#### Query Claude
 ```bash
-curl -N -X POST http://localhost:8000/api/v1/query/stream \
-  -H "Content-Type: application/json" \
-  -H "Accept: text/event-stream" \
-  -d '{
-        "prompt": "Refactor the data loader",
-        "model": "claude-sonnet-4-20250514",
-        "session_id": null
-      }'
+POST /api/v1/query
+Content-Type: application/json
+
+{
+  "prompt": "Your question here",
+  "session_id": "optional-session-id",
+  "max_turns": 30,
+  "model": "claude-3-5-sonnet-20241022",
+  "max_thinking_tokens": 8000
+}
+
+Response:
+{
+  "response": "Claude's response",
+  "session_id": "session-id-for-continuity"
+}
 ```
 
-### Attachment Delivery
+#### Health Check
 ```bash
-curl -LO "http://localhost:8000/api/v1/files/conversations/<conversationId>/attachments/<relative-path>?download=true"
+GET /api/v1/health
+
+Response:
+{
+  "status": "healthy",
+  "service": "Claude SDK Server",
+  "timestamp": "2024-01-19T10:00:00Z"
+}
 ```
 
-Paths are validated against `./tmp/{conversationId}/attachments/` and support inline preview or forced download via the `download` query parameter.
+### 🆕 Streaming Endpoints
 
-> Legacy admin endpoints, WebSocket bridges, and JSONL streams have been archived under `legacy/` and are no longer loaded by default.
+#### Server-Sent Events (SSE)
+Perfect for web browsers with automatic reconnection support.
 
-## 🔎 Observability
+```javascript
+// Browser Example
+const eventSource = new EventSource('/api/v1/stream/sse?include_performance=true');
 
-- Logfire traces are exported via OTLP; set `LOGFIRE_TOKEN` to authorize ingestion.
-- Atla Insights hooks remain active; provide `ATLA_INSIGHTS_API_KEY` and `ATLA_ENVIRONMENT` to funnel runtime metadata.
-- Server logs continue to stream through the custom logger configuration in `src/claude_sdk_server/utils/logging_config.py`.
+eventSource.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Event:', data.type, data.message);
+};
 
-## 🗄️ Legacy Workspace
+// Event types you'll receive:
+// - query_start: Query processing started
+// - session_init: Claude session initialized
+// - thinking_start: Claude is reasoning
+// - thinking_insight: TODOs and insights extracted
+// - tool_use: Tool being called
+// - tool_result: Tool execution result
+// - query_complete: Query finished
+```
 
-Historical scripts, datasets, reports, and manual test harnesses now live in the [`legacy/`](legacy/) folder. They remain available for reference but are excluded from linting and pre-commit hooks.
+Query Parameters:
+- `event_types`: Comma-separated list of event types to filter
+- `session_id`: Filter by specific session
+- `include_performance`: Include performance metrics (default: false)
+- `include_system`: Include system events (default: true)
+
+#### WebSocket
+For bidirectional communication and real-time updates.
+
+```javascript
+// JavaScript Example
+const ws = new WebSocket('ws://localhost:8000/api/v1/stream/ws');
+
+ws.onopen = () => {
+  console.log('Connected to stream');
+  
+  // Subscribe to specific events
+  ws.send(JSON.stringify({
+    action: 'subscribe',
+    event_types: ['query_start', 'tool_use', 'query_complete']
+  }));
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Event received:', data);
+};
+
+// Send commands
+ws.send(JSON.stringify({ action: 'ping' }));
+ws.send(JSON.stringify({ action: 'get_recent', count: 10 }));
+```
+
+Using wscat CLI:
+```bash
+npm install -g wscat
+wscat -c ws://localhost:8000/api/v1/stream/ws
+```
+
+#### JSON Lines Stream
+For programmatic consumption and log processing.
+
+```bash
+# Stream events as JSON Lines
+curl -N http://localhost:8000/api/v1/stream/jsonl
+
+# With filters
+curl -N "http://localhost:8000/api/v1/stream/jsonl?session_id=abc123&event_types=tool_use,tool_result"
+
+# Process with jq
+curl -N http://localhost:8000/api/v1/stream/jsonl | while read line; do
+  echo "$line" | jq '.type, .message'
+done
+```
+
+#### Stream Status
+```bash
+GET /api/v1/stream/status
+
+Response:
+{
+  "active_connections": 3,
+  "events_queued": 42,
+  "total_events_sent": 1337,
+  "uptime_seconds": 3600.5
+}
+```
+
+#### Recent Events
+```bash
+GET /api/v1/stream/events/recent?count=10&event_types=tool_use,tool_result
+
+Response: Array of recent events
+```
+
+#### Active Clients
+```bash
+GET /api/v1/stream/clients
+
+Response:
+{
+  "active_clients": 2,
+  "websocket_connections": 1,
+  "clients": [...]
+}
+```
+
+## 🎨 Beautiful Logging Examples
+
+The new loguru-based logging system provides clean, structured output:
+
+```
+🚀 Starting: Processing your request with claude-3-5-sonnet
+   └─ Input: 12 words, 89 characters
+   └─ Mode: Deep thinking enabled (8,000 tokens)
+
+🔧 Setup: Claude session initialized
+   └─ Tools: 19 tools available
+   └─ MCP: 1 servers: useless-hornet
+
+🤔 Thinking: Analyzing your request...
+📝 TODO: 1. Analyze the user's code structure
+📝 TODO: 2. Identify refactoring opportunities
+💡 Insight: The code follows clean architecture
+
+🛠️ Tool: Read
+   └─ Input: File: /src/main.py
+   └─ Result: ✅ Output: 45 lines, 230 words
+
+✅ Complete: Query processed in 2.35s
+   └─ TODOs: Identified 4 action items
+   └─ Tools: Used 3 tools: Read, Bash, Edit
+   └─ Response: Generated 180 words
+```
+
+## 📊 Event Types
+
+The streaming system emits these event types:
+
+| Event Type | Description | Key Data |
+|------------|-------------|----------|
+| `query_start` | Query processing begins | prompt_length, model, thinking_tokens |
+| `session_init` | Claude session initialized | tools_available, mcp_servers |
+| `thinking_start` | Reasoning begins | signature |
+| `thinking_insight` | TODO/insight extracted | content, priority |
+| `tool_use` | Tool being called | tool_name, input_summary |
+| `tool_result` | Tool execution result | success, result_summary |
+| `tool_error` | Tool failed | error_message |
+| `todo_identified` | TODO item found | todo_content, priority |
+| `decision_made` | Key decision made | decision_content |
+| `performance_metric` | Performance data | operation, duration |
+| `token_usage` | Token consumption | input_tokens, output_tokens, cost_usd |
+| `query_complete` | Query finished | duration_seconds, response_length |
+| `query_error` | Query failed | error_type, error_details |
+
+## 🔧 Environment Variables
+
+```bash
+# Required
+ANTHROPIC_API_KEY=sk-ant-...        # Your Anthropic API key
+
+# Optional Monitoring
+ATLA_INSIGHTS_API_KEY=...           # Atla Insights monitoring
+ATLA_ENVIRONMENT=development        # Environment name
+LOGFIRE_API_KEY=...                 # Logfire monitoring (optional)
+
+# Logging
+LOG_LEVEL=INFO                      # Log level (DEBUG, INFO, WARNING, ERROR)
+```
+
+## 📈 Monitoring & Observability
+
+### Real-time Event Monitoring
+```bash
+# Monitor events in real-time
+make monitor-events
+
+# Watch beautiful logs
+make logs-pretty
+
+# Check streaming status
+make stream-status
+```
+
+### Integration Examples
+
+#### React Component
+```jsx
+import { useEffect, useState } from 'react';
+
+function ClaudeStream() {
+  const [events, setEvents] = useState([]);
+  
+  useEffect(() => {
+    const eventSource = new EventSource('/api/v1/stream/sse');
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setEvents(prev => [...prev, data]);
+      
+      // Handle specific event types
+      switch(data.type) {
+        case 'thinking_insight':
+          console.log('Claude is thinking:', data.content);
+          break;
+        case 'tool_use':
+          console.log('Using tool:', data.tool_name);
+          break;
+        case 'query_complete':
+          console.log('Query completed in', data.duration_seconds, 's');
+          break;
+      }
+    };
+    
+    return () => eventSource.close();
+  }, []);
+  
+  return (
+    <div>
+      {events.map(event => (
+        <div key={event.id}>
+          {event.type}: {event.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+#### Python Client
+```python
+import json
+import requests
+import sseclient
+
+# Query with streaming
+def query_with_stream(prompt):
+    # Start SSE connection
+    stream_url = "http://localhost:8000/api/v1/stream/sse"
+    stream = requests.get(stream_url, stream=True)
+    client = sseclient.SSEClient(stream)
+    
+    # Send query
+    query_response = requests.post(
+        "http://localhost:8000/api/v1/query",
+        json={"prompt": prompt}
+    )
+    
+    # Process events
+    for event in client.events():
+        data = json.loads(event.data)
+        print(f"{data['type']}: {data['message']}")
+        
+        if data['type'] == 'query_complete':
+            break
+    
+    return query_response.json()
+```
 
 ## 🚧 Development
 
@@ -89,23 +408,52 @@ claude_sdk_server/
 │   └── claude_sdk_server/
 │       ├── api/
 │       │   └── routers/
-│       │       ├── attachments_router.py  # Attachment download endpoint
-│       │       └── claude_router.py       # SSE conversation endpoint
-│       ├── legacy/                        # Archived router implementations
+│       │       ├── claude_router.py      # Main API endpoints
+│       │       └── streaming_router.py   # Streaming endpoints
 │       ├── models/
+│       │   ├── dto.py                   # Request/Response models
+│       │   └── events.py                # Event models
 │       ├── services/
+│       │   └── claude_service.py        # Claude interaction logic
 │       ├── streaming/
+│       │   └── event_stream.py          # Event streaming engine
 │       └── utils/
-├── legacy/                                # Archived scripts, data, docs, tests
-├── tests/                                 # Active test suite
-├── Makefile                               # Common commands
-├── docker-compose.yml                     # Docker configuration
-└── README.md                              # This file
+│           └── logging_config.py        # Loguru configuration
+├── tests/                               # Test files
+├── Makefile                            # All commands
+├── docker-compose.yml                  # Docker configuration
+└── README.md                           # This file
 ```
 
 ### Running Tests
 ```bash
-uv run pytest
+# Test everything
+make test
+make test-stream
+
+# Specific tests
+make test-sse
+make test-events
+make test-thinking
+
+# Live demo
+make demo-stream
+```
+
+### Debugging
+```bash
+# View logs
+make logs
+
+# Pretty logs (filtered)
+make logs-pretty
+
+# Monitor events
+make monitor-events
+
+# Check status
+make stream-status
+make stream-clients
 ```
 
 ## 📝 License
@@ -120,19 +468,31 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ### Port 8000 Already in Use
 ```bash
+# Find and stop the process using port 8000
 lsof -i :8000
 kill -9 <PID>
 
+# Or stop Docker container
 docker stop claude-sdk-server
 ```
 
 ### No Events Appearing
-1. Confirm the container is running: `docker ps | grep claude-sdk-server`
-2. Verify required secrets exist in `.env`
-3. Tail logs for errors: `make logs`
+1. Check server is running: `make stream-status`
+2. Verify Claude API key is set correctly
+3. Check logs for errors: `make logs`
+
+### WebSocket Connection Failed
+1. Ensure server is running: `curl http://localhost:8000/api/v1/health`
+2. Check firewall/proxy settings
+3. Try SSE or JSON Lines as alternatives
 
 ## 📚 Additional Resources
 
-- [Claude Code SDK Documentation](https://docs.anthropic.com/claude/docs/claude-code)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Claude Code SDK Documentation](https://github.com/anthropics/claude-code-sdk)
+- [FastAPI Documentation](https://fastapi.tiangolo.com)
 - [Server-Sent Events Spec](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+- [WebSocket Protocol](https://datatracker.ietf.org/doc/html/rfc6455)
+
+---
+
+Built with ❤️ using Claude Code SDK, FastAPI, and Loguru
