@@ -5,10 +5,10 @@ import json
 from datetime import datetime
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
-from src.claude_sdk_server.models.dto import QueryRequest, QueryResponse
+from src.claude_sdk_server.models.dto import QueryRequest
 from src.claude_sdk_server.services.claude_service import (
     ClaudeService,
     get_claude_service,
@@ -50,25 +50,13 @@ def json_serializer(obj):
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
-@router.post("/query")
-async def query_claude(
-    request: QueryRequest, service: ClaudeService = Depends(get_claude_service)
-) -> QueryResponse:
-    """Send a query to Claude Code."""
-    try:
-        response = await service.query(request)
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.post("/query/stream")
 async def query_claude_stream(
     request: QueryRequest, service: ClaudeService = Depends(get_claude_service)
 ):
     """
     Send a query to Claude Code with live SSE streaming of formatted logs.
-    
+
     This endpoint streams:
     - Session initialization
     - Query processing steps
@@ -76,7 +64,7 @@ async def query_claude_stream(
     - Tool usage and results
     - Assistant responses
     - Performance metrics
-    
+
     Example usage:
         curl -X POST http://localhost:8000/api/v1/query/stream \
              -H "Content-Type: application/json" \
@@ -109,7 +97,10 @@ async def query_claude_stream(
             # Send initial event as dict for sse-starlette
             yield {
                 "event": "connection",
-                "data": json.dumps({"status": "connected", "client_id": client_id}, default=json_serializer),
+                "data": json.dumps(
+                    {"status": "connected", "client_id": client_id},
+                    default=json_serializer,
+                ),
             }
 
             # Small delay to ensure SSE connection is fully established
@@ -134,18 +125,15 @@ async def query_claude_stream(
                 try:
                     while client.is_active:
                         try:
-                            # Get event immediately without timeout
-                            event = await client.get_event(timeout=0.001)
-                            if (
-                                event
-                                and hasattr(event, "id")
-                                and event.id not in seen_events
-                            ):
-                                seen_events.add(event.id)
-                                formatted_event = await format_event_for_sse(event)
-                                if formatted_event:
-                                    # Put event in queue immediately
-                                    await event_queue.put(formatted_event)
+                            event = await client.queue.get()
+                            if event.id and event.id in seen_events:
+                                continue
+
+                            formatted_event = await format_event_for_sse(event)
+                            if formatted_event is not None:
+                                await event_queue.put(formatted_event)
+                                if event.id:
+                                    seen_events.add(event.id)
                         except asyncio.TimeoutError:
                             # No event available, yield immediately to prevent batching
                             await asyncio.sleep(0)  # Yield control immediately
@@ -195,16 +183,19 @@ async def query_claude_stream(
                         {
                             "response": response.response,
                             "session_id": response.session_id,
-                            "attachments": [attachment.model_dump() for attachment in response.attachments],
+                            "attachments": [
+                                attachment.model_dump()
+                                for attachment in response.attachments
+                            ],
                             "new_files": response.new_files,
                             "updated_files": response.updated_files,
                             "file_changes_summary": {
                                 "total_files": len(response.attachments),
                                 "new_count": len(response.new_files),
-                                "updated_count": len(response.updated_files)
-                            }
+                                "updated_count": len(response.updated_files),
+                            },
                         },
-                        default=json_serializer
+                        default=json_serializer,
                     ),
                 }
 
@@ -213,18 +204,23 @@ async def query_claude_stream(
                     "event": "complete",
                     "data": json.dumps(
                         {
-                            "status": "completed", 
+                            "status": "completed",
                             "session_id": response.session_id,
-                            "files_changed": len(response.new_files) + len(response.updated_files) > 0,
-                            "summary": f"{len(response.new_files)} nouveaux fichiers, {len(response.updated_files)} modifiés"
+                            "files_changed": len(response.new_files)
+                            + len(response.updated_files)
+                            > 0,
+                            "summary": f"{len(response.new_files)} nouveaux fichiers, {len(response.updated_files)} modifiés",
                         },
-                        default=json_serializer
+                        default=json_serializer,
                     ),
                 }
 
             except Exception as e:
                 # Send error event as dict
-                yield {"event": "error", "data": json.dumps({"error": str(e)}, default=json_serializer)}
+                yield {
+                    "event": "error",
+                    "data": json.dumps({"error": str(e)}, default=json_serializer),
+                }
 
             # Cleanup event stream task
             if event_stream_task and not event_stream_task.done():
@@ -260,74 +256,53 @@ async def format_event_for_sse(event) -> str:
     elif event_type == "query_start":
         formatted_data["display"] = "🚀 Query: Processing request"
         formatted_data["details"] = {
-            "words": getattr(event, "word_count", 0),
-            "model": getattr(event, "model", "unknown"),
+            "prompt_preview": getattr(event, "prompt", "")[:100],
+            "max_turns": getattr(event, "max_turns", None),
         }
-
-    elif event_type == "thinking_start":
-        formatted_data["display"] = "🤔 Thinking: Analyzing your request..."
-
-    elif event_type == "todo_identified":
-        todo_content = getattr(event, "todo_content", "")
-        formatted_data["display"] = f"📝 TODO: {todo_content}"
-
-    elif event_type == "tool_use":
-        tool_name = getattr(event, "tool_name", "unknown")
-        if tool_name == "TodoWrite":
-            formatted_data["display"] = "📋 Todo Update: Managing task list"
-        elif "perplexity" in tool_name.lower():
-            formatted_data["display"] = "🔍 Perplexity: Searching web for current info"
-        elif "firecrawl" in tool_name.lower():
-            formatted_data["display"] = "🕷️ Firecrawl: Web scraping"
-        else:
-            formatted_data["display"] = f"🛠️ Tool: {tool_name}"
-        formatted_data["details"] = getattr(event, "input_summary", "")
-
-    elif event_type == "tool_result":
-        tool_name = getattr(event, "tool_name", "unknown")
-        success = getattr(event, "success", False)
-        status = "✅" if success else "❌"
-        if "perplexity" in tool_name.lower():
-            formatted_data["display"] = f"{status} Perplexity search completed"
-        elif "firecrawl" in tool_name.lower():
-            formatted_data["display"] = f"{status} Web scraping completed"
-        else:
-            formatted_data["display"] = f"{status} Result: {tool_name} completed"
-
-    elif event_type == "assistant_message":
-        formatted_data["display"] = "💬 Assistant: Response block"
-        formatted_data["details"] = {
-            "has_text": getattr(event, "has_text", False),
-            "has_thinking": getattr(event, "has_thinking", False),
-            "has_tools": getattr(event, "has_tools", False),
-        }
-        # Include full content for frontend display
-        full_content = getattr(event, "full_content", None)
-        if full_content:
-            formatted_data["full_content"] = full_content
 
     elif event_type == "query_complete":
-        duration = getattr(event, "duration_seconds", 0)
-        formatted_data["display"] = f"✅ Complete: Query processed in {duration:.2f}s"
+        formatted_data["display"] = "✅ Query Complete"
+        formatted_data["details"] = {
+            "duration_seconds": getattr(event, "duration_seconds", None),
+            "response_length": getattr(event, "response_length", None),
+        }
 
-    elif event_type == "performance_metric":
-        operation = getattr(event, "operation", "unknown")
-        duration = getattr(event, "duration", 0)
-        formatted_data["display"] = f"📊 Performance: {operation} took {duration:.2f}s"
+    elif event_type == "query_error":
+        formatted_data["display"] = "❌ Query Error"
+        formatted_data["details"] = {
+            "error": getattr(event, "error_message", "Unknown error"),
+        }
 
-    else:
-        # Generic event
-        formatted_data["display"] = f"📌 {event_type}: {getattr(event, 'message', '')}"
+    elif event_type == "assistant_message":
+        formatted_data["display"] = "💬 Assistant Response"
+        formatted_data["details"] = {
+            "content": getattr(event, "full_content", "")[:200],
+        }
 
-    # Add raw event data if available
-    if hasattr(event, "data") and event.data:
-        formatted_data["data"] = event.data
+    elif event_type == "tool_use":
+        formatted_data["display"] = "🛠️ Tool Use"
+        formatted_data["details"] = {
+            "tool": getattr(event, "tool_name", "unknown"),
+            "status": getattr(event, "status", "unknown"),
+        }
+
+    elif event_type == "thinking_insight":
+        formatted_data["display"] = "🤔 Insight"
+        formatted_data["details"] = {
+            "summary": getattr(event, "insight", "")[:200],
+        }
+
+    elif event_type == "performance":
+        formatted_data["display"] = "📊 Performance"
+        formatted_data["details"] = {
+            "prompt_tokens": getattr(event, "prompt_tokens", None),
+            "completion_tokens": getattr(event, "completion_tokens", None),
+            "total_tokens": getattr(event, "total_tokens", None),
+            "cached": getattr(event, "cache_hits", None),
+        }
+
+    # Convert to SSE format
+    formatted_json = json.dumps(formatted_data, default=json_serializer)
 
     # Return as dict for sse-starlette
     return {"event": "log", "data": json.dumps(formatted_data, default=json_serializer)}
-
-
-@router.get("/health")
-async def health_check():
-    """Simple health check endpoint."""
-    return {"status": "healthy"}

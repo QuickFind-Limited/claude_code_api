@@ -1,22 +1,23 @@
 [project]
 name = "claude-sdk-server"
 version = "1.0.0"
-description = "Minimal Claude SDK API Server"
+description = "Claude Code API for Source."
 readme = "README.md"
 authors = [
-    { name = "Yoan Gabison", email = "yoan.gabison@gmail.com" }
+    { name = "Yoan Gabison", email = "yoan@source.shop" }
 ]
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.6",
     "uvicorn[standard]>=0.34.0",
     "pydantic>=2.10.5",
-    "claude-code-sdk>=0.0.20",
+    "claude-code-sdk==0.0.20",
+    "logfire[fastapi]>=4.3.3",
     "loguru>=0.7.3",
     "httpx>=0.28.1",
     "rich>=14.1.0",
     "sse-starlette>=3.0.0",
-    "atla-insights[claude-code-sdk]>=0.0.25",
+    "atla-insights[claude-code-sdk]>=0.0.26",
 ]
 
 [build-system]
@@ -28,6 +29,7 @@ packages = ["src/claude_sdk_server"]
 
 [tool.ruff]
 include = ["*.py", "*.pyi", "**/pyproject.toml"]
+exclude = ["legacy", "src/claude_sdk_server/legacy"]
 
 [tool.ruff.lint]
 # Enable the isort rules.
@@ -35,6 +37,9 @@ extend-select = ["I"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"src/claude_sdk_server/main.py" = ["E402"]
+"src/claude_sdk_server/api/routers/claude_router.py" = ["F841"]
+"src/claude_sdk_server/services/claude_service.py" = ["F821", "F841"]
 
 [dependency-groups]
 dev = [
