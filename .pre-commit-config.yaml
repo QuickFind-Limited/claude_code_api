@@ -5,10 +5,12 @@ repos:
     hooks:
       # Run the linter.
       - id: ruff
+        exclude: ^(legacy/|src/claude_sdk_server/legacy/)
         types_or: [ python, pyi ]
         args: [ --fix ]
         stages: [ pre-commit ]
       # Run the formatter.
       - id: ruff-format
+        exclude: ^(legacy/|src/claude_sdk_server/legacy/)
         types_or: [ python, pyi ]
         stages: [ pre-commit ]

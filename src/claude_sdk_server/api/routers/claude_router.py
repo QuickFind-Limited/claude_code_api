@@ -5,10 +5,10 @@ import json
 from datetime import datetime
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
-from src.claude_sdk_server.models.dto import QueryRequest, QueryResponse
+from src.claude_sdk_server.models.dto import QueryRequest
 from src.claude_sdk_server.services.claude_service import (
     ClaudeService,
     get_claude_service,
@@ -48,18 +48,6 @@ def json_serializer(obj):
     if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
-
-
-@router.post("/query")
-async def query_claude(
-    request: QueryRequest, service: ClaudeService = Depends(get_claude_service)
-) -> QueryResponse:
-    """Send a query to Claude Code."""
-    try:
-        response = await service.query(request)
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/query/stream")
@@ -103,13 +91,16 @@ async def query_claude_stream(
         )
 
         # Connect client
-        client = await event_manager.connect_client(subscription, connection_type="sse")
+        await event_manager.connect_client(subscription, connection_type="sse")
 
         try:
             # Send initial event as dict for sse-starlette
             yield {
                 "event": "connection",
-                "data": json.dumps({"status": "connected", "client_id": client_id}, default=json_serializer),
+                "data": json.dumps(
+                    {"status": "connected", "client_id": client_id},
+                    default=json_serializer,
+                ),
             }
 
             # Small delay to ensure SSE connection is fully established
@@ -160,15 +151,12 @@ async def query_claude_stream(
             event_stream_task = asyncio.create_task(stream_events_task())
 
             # Stream events immediately as they arrive with explicit flushing
-            last_yield_time = asyncio.get_event_loop().time()
-
             while not query_task.done() or not event_queue.empty():
                 try:
                     # Wait for event without timeout to prevent batching
                     event = await event_queue.get()
                     # Event is already a dict from format_event_for_sse
                     yield event
-                    last_yield_time = asyncio.get_event_loop().time()
                 except Exception as e:
                     print(f"Event streaming error: {e}")
                     break
@@ -195,16 +183,19 @@ async def query_claude_stream(
                         {
                             "response": response.response,
                             "session_id": response.session_id,
-                            "attachments": [attachment.model_dump() for attachment in response.attachments],
+                            "attachments": [
+                                attachment.model_dump()
+                                for attachment in response.attachments
+                            ],
                             "new_files": response.new_files,
                             "updated_files": response.updated_files,
                             "file_changes_summary": {
                                 "total_files": len(response.attachments),
                                 "new_count": len(response.new_files),
-                                "updated_count": len(response.updated_files)
-                            }
+                                "updated_count": len(response.updated_files),
+                            },
                         },
-                        default=json_serializer
+                        default=json_serializer,
                     ),
                 }
 
@@ -213,18 +204,23 @@ async def query_claude_stream(
                     "event": "complete",
                     "data": json.dumps(
                         {
-                            "status": "completed", 
+                            "status": "completed",
                             "session_id": response.session_id,
-                            "files_changed": len(response.new_files) + len(response.updated_files) > 0,
-                            "summary": f"{len(response.new_files)} nouveaux fichiers, {len(response.updated_files)} modifiés"
+                            "files_changed": len(response.new_files)
+                            + len(response.updated_files)
+                            > 0,
+                            "summary": f"{len(response.new_files)} nouveaux fichiers, {len(response.updated_files)} modifiés",
                         },
-                        default=json_serializer
+                        default=json_serializer,
                     ),
                 }
 
             except Exception as e:
                 # Send error event as dict
-                yield {"event": "error", "data": json.dumps({"error": str(e)}, default=json_serializer)}
+                yield {
+                    "event": "error",
+                    "data": json.dumps({"error": str(e)}, default=json_serializer),
+                }
 
             # Cleanup event stream task
             if event_stream_task and not event_stream_task.done():
@@ -325,9 +321,3 @@ async def format_event_for_sse(event) -> str:
 
     # Return as dict for sse-starlette
     return {"event": "log", "data": json.dumps(formatted_data, default=json_serializer)}
-
-
-@router.get("/health")
-async def health_check():
-    """Simple health check endpoint."""
-    return {"status": "healthy"}

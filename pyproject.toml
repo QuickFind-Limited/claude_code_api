@@ -17,6 +17,7 @@ dependencies = [
     "rich>=14.1.0",
     "sse-starlette>=3.0.0",
     "atla-insights[claude-code-sdk]>=0.0.25",
+    "opentelemetry-instrumentation-fastapi>=0.58b0",
 ]
 
 [build-system]
@@ -28,6 +29,7 @@ packages = ["src/claude_sdk_server"]
 
 [tool.ruff]
 include = ["*.py", "*.pyi", "**/pyproject.toml"]
+exclude = ["legacy", "src/claude_sdk_server/legacy"]
 
 [tool.ruff.lint]
 # Enable the isort rules.
@@ -35,6 +37,8 @@ extend-select = ["I"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"src/claude_sdk_server/main.py" = ["E402"]
+"src/claude_sdk_server/services/claude_service.py" = ["F821", "F841"]
 
 [dependency-groups]
 dev = [
