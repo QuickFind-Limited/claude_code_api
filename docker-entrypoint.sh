@@ -9,6 +9,17 @@ if [ -f "/app/claude-config.json" ]; then
     echo "MCP configuration copied"
 fi
 
+# Include all the files of agents from claude_agents folder without the folder itself in the .claude/agents directory
+if [ -d "/app/claude_agents" ]; then
+    mkdir -p /home/app/.claude/agents/
+    cp -r /app/claude_agents/* /home/app/.claude/agents/
+    echo "Agents copied"
+fi
+
+# Echo the content of the .claude/agents directory
+echo "Content of the .claude/agents directory:"
+ls -la /home/app/.claude/agents/
+
 # List MCP servers to verify and count them
 echo "Checking MCP servers..."
 MCP_OUTPUT=$(claude mcp list)

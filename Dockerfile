@@ -42,6 +42,7 @@ COPY tests/ ./tests/
 COPY Makefile ./
 COPY docker-entrypoint.sh /usr/local/bin/
 COPY claude-config.json /app/
+COPY claude_agents/ /app/claude_agents/
 
 # Create logs directory
 RUN mkdir -p logs
@@ -52,7 +53,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Ensure non-root user owns application files and writable dirs
 RUN chown -R app:app /app && \
     mkdir -p /home/app/.config && \
-    chown -R app:app /home/app/.config
+    chown -R app:app /home/app/.config && \
+    chown -R app:app /app/claude_agents/
 
 # Set environment variables
 ENV PYTHONPATH="/app:${PYTHONPATH}"

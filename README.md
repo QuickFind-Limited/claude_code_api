@@ -13,17 +13,17 @@ A lean FastAPI backend that powers the Claude Code chatbot with **SSE streaming*
 - 🧱 **Focused Backend** – `src/claude_sdk_server` contains only the production API surface required by the current frontend.
 - 🗂️ **`legacy/` Archive** – Historical scripts, datasets, docs, and experimental tests now live under `legacy/` for reference.
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Docker)
 
 ```bash
-# Start the server
+# Build and start the stack
 make up
 
-# Exercise the streaming endpoint
-make test-stream
+# Tail container logs
+make logs
 
-# Watch formatted logs
-make logs-pretty
+# Stop the stack when finished
+make down
 ```
 
 ## 📦 Installation
@@ -59,26 +59,16 @@ docker run -d \
 
 ## 🎮 Makefile Commands
 
-### Basic Commands
+The service now runs exclusively in Docker. Available targets:
+
 ```bash
 make up          # Build and start the server
 make down        # Stop the server
 make restart     # Restart the server
-make logs        # View server logs
-make clean       # Remove containers and images
-```
-
-### Testing Commands
-```bash
-make test        # Run backend test suite
-make test-stream # Exercise the streaming pipeline
-make test-sse    # Smoke-test the SSE endpoint
-```
-
-### Development Commands
-```bash
-make logs-pretty    # Watch logs with beautiful formatting
-make demo-stream    # Run streaming demo with live query
+make logs        # Tail server logs
+make clean       # Remove containers, image, and caches
+make logs-pretty # Tail logs with emoji-based filtering
+make frontend-3002 # Start the React frontend in chatbot-frontend
 ```
 
 ## 📡 API Endpoints
@@ -123,6 +113,7 @@ These paths are excluded from linting and pre-commit checks but remain versioned
 - `logfire_exporter` + `FastAPIInstrumentor` capture traces for every request.
 - Atla Insights is wired via `instrument_claude_code_sdk()`; set `ATLA_INSIGHTS_API_KEY` / `ATLA_ENVIRONMENT` to enable.
 - Structured Loguru configuration lives in `src/claude_sdk_server/utils/logging_config.py`.
+- The server expects `LOGFIRE_TOKEN`, `ATLA_INSIGHTS_API_KEY`, and `ATLA_ENVIRONMENT` in its environment (see `.env.example`).
 
 ## 🚧 Development
 
@@ -145,13 +136,6 @@ claude_sdk_server/
 ├── Makefile
 ├── docker-compose.yml
 └── README.md
-```
-
-### Running Tests
-```bash
-make test
-make test-stream
-make test-sse
 ```
 
 ### Debugging
